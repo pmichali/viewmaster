@@ -1,0 +1,7 @@
+.coverage
+poetry.lock
+*~
+\#*\#
+__pycache__
+*.log*
+/.metadata/

@@ -1,0 +1,215 @@
+
+{% extends "viewmaster/base_generic.html" %}
+
+{% block local_styles %}
+html {
+    font-size: 14px;
+}
+body {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+#pagehead {
+    text-align: center;
+    font-size: 1.8em;
+    margin-bottom: 4px;
+}
+
+#vers {
+    display: inline-block;
+    font-size: 0.6em;
+    vertical-align: middle;
+}
+
+.movie-category {
+    font-size: large;
+    font-weight: bold;
+}
+
+.go-top {
+    text-align: right;
+    font-size: 0.8em;
+}
+{% endblock %}
+
+{% block content %}
+{% load static %}
+<p id="pagehead">Movie Catalog - <span id="vers">V1.0</span></p>
+<form action="{% url 'viewmaster:movie-list' %}" method="post" class="display: inline-block">
+<div class="container-fluid text-center">
+  <div class="row">
+	<div class="col-auto mr-2 mb-2 d-none">
+	{% csrf_token %}
+	</div>
+	<div class="col-auto d-none">
+		<input type="hidden" id="last-mode" name="last_mode" value="{{ mode }}" >
+	</div>
+ 	<div class="col-auto mb-2">
+	    <button type="submit" name="mode" value="alpha" class="btn btn-primary">Alphabetical</button>
+	</div>
+	<div class="col-auto mb-2">
+		<button type="submit" name="mode" value="cat_alpha" class="btn btn-secondary">Category/Alpha</button>
+	</div>
+	<div class="col-auto mb-2">
+		<button type="submit" name="mode" value="cat_date_alpha" class="btn btn-secondary">Category/Date/Alpha</button>
+	</div>
+	<div class="col-auto mb-2">
+		<button type="submit" name="mode" value="date" class="btn btn-success">Date/Alpha</button>
+	</div>
+	<div class="col-auto mb-2">
+		<button type="submit" name="mode" value="collection" class="btn btn-info">Collection/Date</button>
+	</div>
+	<div class="col-auto mb-2">
+		<button type="submit" name="mode" value="disk" class="btn btn-info">Format/Alpha</button>
+	</div>
+	<div class="col-auto mb-2 mt-2">
+	  <div class="form-check">
+	    <input class="form-check-input" type="checkbox" id="LD"
+	           name="showLD" value="show" {% if show_LD %}checked{% endif %} >
+	    <label class="form-check-label" for="LD"> Show LDs</label>
+	  </div>
+	</div>
+	<div class="col-auto mb-2 mt-2">
+	  <div class="form-check">
+	    <input class="form-check-input" type="checkbox" id="details"
+	           name="show-details" value="show" {% if show_details %}checked{% endif %} >
+	    <label class="form-check-label" for="details"> Show Details</label>
+	  </div>
+	</div>
+    <div class="col-auto mb-2">
+	  <button type="button" onclick="window.location.href='{% url 'viewmaster:movie-add' %}'" class="btn btn-warning">
+	    Add Movie
+	  </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-auto mb-2 mt-2">
+      <strong>ALL:</strong> {{ total }} ({{ total_paid }} paid)
+    </div>
+    {% for s in stats %}
+      <div class="col-auto mb-2 mt-2">
+		<strong>{{ s.format }}:</strong> {{ s.count }} ave ${{ s.average | floatformat:"2" }}
+	  </div>
+    {% endfor %}
+    <div class="col-3 mb-2">
+      <input type="text" class="form-control" name="phrase" id="phrase" placeholder="title search" >
+    </div>
+    <div class="col-auto mb-2">
+      <input type="image" name="search" src="{% static 'viewmaster/search.png' %} "border="0" style="width: 32px;" />
+    </div>
+  </div>
+</div>
+</form>
+	{% if movies %}
+	  {% if mode == "alpha" %}
+	    {% regroup movies by alpha_order as ordered_movies %}
+	  {% elif mode == "cat_alpha" or mode == "cat_date_alpha" %}
+	    {% regroup movies by category_order as ordered_movies %}
+	  {% elif mode == "date" %}
+	    {% regroup movies by release_order as ordered_movies %}
+	  {% elif mode == "collection" %}
+	    {% regroup movies by collection_order as ordered_movies %}
+	  {% else %}
+	    {% regroup movies by format_order as ordered_movies %}
+	  {% endif %}
+	  {% for code, movie_group in ordered_movies %}
+	    <p />
+	    <div class="container-fluid">
+			<div class="row">
+			  <div class="col-lg movie-category">{{ code }}</div>
+				<div class="col-lg go-top">
+				  <form class="display: inline-block">
+				    {% csrf_token %}
+                    <input type="BUTTON" value="Back to top of page" class="btn btn-link"
+                           onclick="window.location.href='#top'">
+                  </form>
+				</div>
+			</div>
+		</div>
+	    <div class="container-fluid text-center">
+  		  <div class="row border border-primary">
+            <div class="col-lg-3 text-truncate" style="max-width: 350px;">TITLE</div>
+	        <div class="col-lg">CATEGORY</div>
+	        <div class="col-lg">DATE</div>
+	        <div class="col-lg">RATING</div>
+	        <div class="col-lg">TIME</div>
+	        <div class="col-lg">FMT</div>
+	        {% if show_details %}
+	        <div class="col-lg">ASPECT</div>
+	        <div class="col-lg">AUDIO</div>
+	        <div class="col-lg">COLL</div>
+	        <div class="col-lg">COST</div>
+	        {% endif %}
+	      </div>
+	    </div>
+	  	<div class="container-fluid">
+ 	    {% for movie in movie_group %}
+ 		  <div class="row border-bottom border-end border-start border-primary">
+			
+	        <div class="col-lg-3 text-truncate" style="max-width: 350px;">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.title }}
+			  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.category }}
+		  	  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.release }}
+			  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.rating }}
+			  </a>
+			</div>
+		    <div class="col-lg">
+		  	  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.duration_str }}
+		  	  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.format }}
+			  </a>
+			</div>
+			{% if show_details %}
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.aspect }}
+			  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.audio }}
+			  </a>
+			</div>
+		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				  {{ movie.collection }}
+			  </a>
+			</div>
+ 		    <div class="col-lg">
+			  <a href="{% url 'viewmaster:movie-update' movie.id %}">
+				   {{ movie.cost }}
+			  </a>
+			</div>
+			{% endif %}
+  	      </div>
+	    {% endfor %}
+	    </div>
+	  {% endfor %}
+	{% else %}
+	    <p>No matching movies.</p>
+	{% endif %}
+	<p>User: {{ user }} <a href="/admin/logout/">LOGOUT</a></p>
+{% endblock %}

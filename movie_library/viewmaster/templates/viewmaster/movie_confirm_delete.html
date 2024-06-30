@@ -1,0 +1,24 @@
+{% extends "viewmaster/base_generic.html" %}
+
+{% block content %}
+
+<h1>Delete Movie</h1>
+
+<p>Are you sure you want to delete the movie '{{ movie.title }}' in format {{ movie.format }}?</p>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  <input type="submit" value="Yes, delete." class="btn btn-primary"/>
+  <button class="btn btn-info" id="cancelBtn">Cancel</button>
+</form>
+
+{% endblock %}
+
+
+{% block more-js %}
+// Redirect to list, without submitting form and deleting
+document.getElementById("cancelBtn").onclick = function () {
+    window.location.href = "{% url 'viewmaster:movie-list' %}";
+    return false;  // So that form is not submitted and form URL is not used
+}
+{% endblock %}

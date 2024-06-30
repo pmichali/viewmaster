@@ -1,0 +1,13 @@
+version: "2.3"
+services:
+  viewmaster:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./DBase:/code/DBase
+    image: viewmaster:latest
+    ports:
+     - 8642:8642
+    container_name: viewmaster
+    restart: unless-stopped

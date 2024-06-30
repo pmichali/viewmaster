@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "viewmaster"
+version = "0.1.0"
+description = "My movies"
+authors = ["Paul Michali <MY_EMAIL_ADDRESS>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+xlrd = "^2.0.1"
+openpyxl = "^3.1.5"
+django = "^4.2.13"
+sqlalchemy = "^2.0.31"
+django-auditlog = "^2.2.2"
+pandas = "^2.2.2"
+  
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
