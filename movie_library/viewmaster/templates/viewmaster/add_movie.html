@@ -1,0 +1,14 @@
+{% extends "viewmaster/base_generic.html" %}
+{% block title %}<title>Add Movie</title>{% endblock %}
+
+{% block content %}
+   <h4>Add Movie</h4>	
+    <form method="post">
+      {% csrf_token %}
+      <table>
+        {{ form.as_table }}
+      </table>
+      <input type="submit" value="Save" class="btn btn-primary">
+      <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
+    </form>
+{% endblock %}

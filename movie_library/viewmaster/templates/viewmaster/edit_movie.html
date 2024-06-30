@@ -1,0 +1,28 @@
+{% extends "viewmaster/base_generic.html" %}
+{% block title %}<title>Edit Movie</title>{% endblock %}
+
+{% block content %}
+    <h4>Edit Movie: {{ movie.title }}</h4>	
+	<form method="post" action="">
+      {% csrf_token %}
+        <table>
+      {{ form.as_table }}
+      </table>
+      <input type="submit" value="Save" class="btn btn-primary">
+      <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
+	  <button id="deleteBtn" class="btn btn-danger">Delete</button>
+    </form>
+{% endblock %}
+
+{% block more-js %}
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
+// Redirect to a confirmation page
+document.getElementById("deleteBtn").onclick = function () {
+    window.location.href = "{% url 'viewmaster:movie-delete' movie.id %}";
+    return false;  // So that form is not submitted and form URL used
+}
+{% endblock %}
