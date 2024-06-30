@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: viewmaster-cm
+  namespace: viewmaster
+data:
+  ALLOWED_HOSTS: "*"
+  LOGLEVEL: "info"
+  DEBUG: "False"
+  PGDATA: "/var/lib/postgresql/data/db-files/"

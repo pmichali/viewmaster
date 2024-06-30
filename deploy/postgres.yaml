@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: viewmaster-postgres
+  namespace: viewmaster
+  labels:
+    app: viewmaster
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: viewmaster
+    tier: postgres
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: viewmaster-postgres-pvc
+  namespace: viewmaster
+  labels:
+    app: viewmaster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: viewmaster
+  labels:
+    app: viewmaster-postgres
+spec:
+  selector:
+    matchLabels:
+      app: viewmaster
+      tier: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: viewmaster
+        tier: postgres
+    spec:
+      volumes:
+        - name: viewmaster-data
+          persistentVolumeClaim:
+            claimName: viewmaster-postgres-pvc
+      containers:
+        - image: postgres:16.3-alpine
+          name: postgres
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: viewmaster-data
+              mountPath: /var/lib/postgresql/data
+          envFrom:
+          - secretRef:
+              name: viewmaster-secrets
+          - configMapRef:
+              name: viewmaster-cm
