@@ -1,4 +1,3 @@
-from sqlalchemy import func
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
