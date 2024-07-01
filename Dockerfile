@@ -1,7 +1,7 @@
 FROM python:3.12.4
 
 # Python and setup timezone
-RUN apt-get update -y && apt-get install -y software-properties-common python3-pip
+RUN apt-get update -y && apt-get install -y software-properties-common python3-pip postgresql-client
 
 # Fault handler dumps traceback on seg faults
 # Unbuffered sends stdout/stderr to log vs buffering
@@ -29,11 +29,7 @@ COPY movie_library/ /code/movie_library/
 RUN poetry config virtualenvs.create false && \
     poetry install
 
-# Setup user account
-RUN useradd -d /code -l -u 1000 -s /bin/bash pcm && \
-    chown --silent --changes --recursive 1000:1000 /code
-
-USER pcm
+EXPOSE 80
 
 # CMD sleep infinity
-CMD /code/runserver.bash
+CMD ["/code/runserver.bash"]
