@@ -1,3 +1,6 @@
 #!/bin/bash
 cd /code/movie_library
-python3 manage.py runserver 0.0.0.0:8642
+python manage.py collectstatic --noinput
+python manage.py migrate
+gunicorn -b :8080 movie_library.wsgi:application
+
