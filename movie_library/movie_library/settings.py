@@ -155,45 +155,45 @@ LOGIN_URL = '/admin/login/'
 # To protect from XSS attacks
 SESSION_COOKIE_HTTPONLY = True
 
-# LOG_ROOT = str("/var/log")
+LOG_ROOT = str("/var/log")
 
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": True,  # Don't need to see request logging too.
-#     "formatters": {
-#         "standard": {
-#             "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-#             "datefmt": "%d/%b/%Y %H:%M:%S",
-#         },
-#     },
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#             "formatter": "standard",
-#         },
-#         "file": {
-#             "level": "WARNING",
-#             "class": "logging.handlers.RotatingFileHandler",
-#             "filename": LOG_ROOT + "/viewmaster-error.log",
-#             "formatter": "standard",
-#             "maxBytes": 1024000,
-#             "backupCount": 3,
-#         },
-#         "mail_admins": {
-#             "level": "ERROR",
-#             "class": "django.utils.log.AdminEmailHandler",
-#             "include_html": True,
-#         },
-#     },
-#     "loggers": {
-#         "viewmaster": {
-#             "handlers": ["console", "file", "mail_admins"],
-#             "level": os.getenv("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO"),
-#             "propagate": False,
-#         },
-#     },
-#     "root": {
-#         "handlers": ["console"],
-#         "level": "WARNING",
-#     },
-# }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,  # Don't need to see request logging too.
+    "formatters": {
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+        "file": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_ROOT + "/viewmaster-error.log",
+            "formatter": "standard",
+            "maxBytes": 1024000,
+            "backupCount": 3,
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler",
+            "include_html": True,
+        },
+    },
+    "loggers": {
+        "viewmaster": {
+            "handlers": ["console", "file", "mail_admins"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO"),
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}
