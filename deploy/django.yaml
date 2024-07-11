@@ -7,10 +7,9 @@ metadata:
     app: viewmaster
 spec:
   ports:
-    - name: http
-      port: 8000
+    - port: 8000
+      name: http
       targetPort: 8080
-      protocol: TCP
   selector:
     app: viewmaster
     tier: app
@@ -59,8 +58,7 @@ spec:
           persistentVolumeClaim:
             claimName: viewmaster-app-pvc
       containers:
-
-        - image: pmichali/viewmaster-app:v0.1.4
+        - image: pmichali/viewmaster-app:v0.1.2
           imagePullPolicy: Always  # IfNotPresent
           name: app
           ports:
