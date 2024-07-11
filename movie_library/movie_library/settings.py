@@ -33,7 +33,7 @@ ALLOWED_HOSTS.extend(
         os.environ.get('ALLOWED_HOSTS', '').split(','),
     )
 )
-
+CSRF_TRUSTED_ORIGINS = ['https://' + os.environ.get('PUBLIC_DOMAIN', 'missing-domain-name')]
 
 # Application definition
 
@@ -49,7 +49,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-#     'csp.middleware.CSPMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -60,16 +59,6 @@ MIDDLEWARE = [
     'auditlog.middleware.AuditlogMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
-
-# Content Security Policy
-# CSP_IMG_SRC = ("'self'")
-# CSP_DEFAULT_SRC = ("'self'")
-# CSP_STYLE_SRC = ("'self'")
-# CSP_SCRIPT_SRC = ("'self'")
-# CSP_FONT_SRC = ("'self'")
-# CSP_FRAME_ANCESTORS = ("'none'")
-# CSP_FORM_ACTION = ("'self'")
-# CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src']
 
 ROOT_URLCONF = 'movie_library.urls'
 
@@ -140,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATIC_ROOT = '/vol/web/static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -154,46 +143,3 @@ LOGIN_URL = '/admin/login/'
 
 # To protect from XSS attacks
 SESSION_COOKIE_HTTPONLY = True
-
-LOG_ROOT = str("/var/log")
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": True,  # Don't need to see request logging too.
-    "formatters": {
-        "standard": {
-            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            "datefmt": "%d/%b/%Y %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "standard",
-        },
-        "file": {
-            "level": "WARNING",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_ROOT + "/viewmaster-error.log",
-            "formatter": "standard",
-            "maxBytes": 1024000,
-            "backupCount": 3,
-        },
-        "mail_admins": {
-            "level": "ERROR",
-            "class": "django.utils.log.AdminEmailHandler",
-            "include_html": True,
-        },
-    },
-    "loggers": {
-        "viewmaster": {
-            "handlers": ["console", "file", "mail_admins"],
-            "level": os.getenv("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO"),
-            "propagate": False,
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "WARNING",
-    },
-}

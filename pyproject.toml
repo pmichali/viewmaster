@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "viewmaster"
-version = "0.1.1"
+version = "0.1.2"
 description = "My movies"
 authors = ["Paul Michali <MY_EMAIL_ADDRESS>"]
 readme = "README.md"
@@ -8,13 +8,12 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-django = "^4.2.13"
+django = "^4.2.14"
 django-auditlog = "^2.3.0"
 psycopg = "^3.2.1"
 gunicorn = "^22.0.0"
-# django-csp = "^3.8"
 whitenoise = "^6.7.0"
-  
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
