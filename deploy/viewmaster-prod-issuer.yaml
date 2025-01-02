@@ -5,7 +5,7 @@ metadata:
  namespace: viewmaster
 spec:
  acme:
-   email: your-email-address
+   email: webmaster@access2.one
    # We use the staging server here for testing to avoid hitting
    server: https://acme-v02.api.letsencrypt.org/directory
    privateKeySecretRef:

@@ -1,0 +1,1 @@
+kubectl exec -it -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1` -- /bin/bash
