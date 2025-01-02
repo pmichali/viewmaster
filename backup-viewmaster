@@ -1,0 +1,2 @@
+kubectl exec -it -n viewmaster `kubectl get pod -n viewmaster -l tier=postgres | cut -f1 -d" " | tail -1` -- pg_dump -U viewmasterer -W -F t viewmasterdb > viewmasterdb.tar
+

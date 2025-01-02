@@ -9,10 +9,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - movies.my-domain.com
+        - movies.access2.one
       secretName: viewmaster-prod-cert
   rules:
-    - host: movies.my-domain.com
+    - host: movies.access2.one
       http:
         paths:
           - path: /
