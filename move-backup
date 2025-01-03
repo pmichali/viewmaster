@@ -1,0 +1,3 @@
+TIMESTAMP=`date "+%C%y-%m-%d.%H%M"`
+kubectl cp -n viewmaster `kubectl get pod -n viewmaster -l tier=postgres | cut -f1 -d" " | tail -1`:viewmasterdb.tar "viewmasterdb-${TIMESTAMP}.tar"
+
