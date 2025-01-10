@@ -1,4 +1,4 @@
-FROM python:3.12.4
+FROM python:3.13.1
 
 # Python and setup timezone
 RUN apt-get update -y && apt-get install -y software-properties-common python3-pip postgresql-client
@@ -15,14 +15,14 @@ ENV CODEBASE=/code \
   PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  POETRY_VERSION=1.8.2
+  POETRY_VERSION=2.0.0
 
 # System dependencies
 RUN pip3 install "poetry==$POETRY_VERSION"
 
 # Copy over all needed files
 WORKDIR /code
-COPY poetry.lock pyproject.toml runserver.bash /code/
+COPY README.txt poetry.lock pyproject.toml runserver.bash /code/
 COPY movie_library/ /code/movie_library/
 
 # setup tools for environment, using pyproject.toml file
