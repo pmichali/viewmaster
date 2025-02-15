@@ -12,15 +12,21 @@ CATEGORY_CHOICES = [
     ('ANIMATED', 'animated'),
     ('CHILDRENS', 'childrens'),
     ('COMEDY', 'comedy'),
+    ('CRIME', 'crime'),
     ('DOCUMENTARY', 'documentary'),
     ('DRAMA', 'drama'),
+    ('FAMILY', 'family'),
     ('FANTASY', 'fantasy'),
+    ('HISTORY', 'history'),
     ('HORROR', 'horror'),
     ('MILITARY', 'military'),
     ('MISC', 'misc'),
     ('MUSICAL', 'musical'),
+    ('MYSTERY', 'mystery'),
+    ('ROMANCE', 'romance'),
     ('SCI-FI', 'sci-fi'),
     ('SUSPENSE', 'suspense'),
+    ('THRILLER', 'thriller'),
     ('UNKNOWN', 'unknown'),
     ('WESTERN', 'western'),
 ]
@@ -60,6 +66,12 @@ class Movie(models.Model):
     cost = models.DecimalField(max_digits=6, decimal_places=2, help_text="In USD.")
     paid = models.BooleanField(default=True, help_text="Indicates movie was purchased, versus being a gift.")
     bad = models.BooleanField(default=False, help_text="Indicates that movie is not playable, or has playback issues.")
+
+    plot = models.CharField(blank=True, default="", help_text="Plot summary (imported)")
+    actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
+    directors = models.CharField(blank=True, default="", help_text="Director(s) (imported)")
+    cover_ref = models.URLField(blank=True, default="", help_text="URL where poster image is located (imported)")
+    movie_id = models.CharField(blank=True, default="", help_text="IMDB movie ID (imported)")
 
     def get_absolute_url(self):
         """Link used when updating movie?"""
