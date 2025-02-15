@@ -8,6 +8,11 @@
         <table>
       {{ form.as_table }}
       </table>
+      <p>
+      {% if "http" in form.cover_ref.value %}
+      	<img src="{{ form.cover_ref.value }}" alt="Movie Poster"/>
+      {% endif %}
+      </p>
       <input type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
 	  <button id="deleteBtn" class="btn btn-danger">Delete</button>

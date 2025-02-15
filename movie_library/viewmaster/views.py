@@ -5,11 +5,12 @@ from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from .models import Movie
-from .forms import MovieForm
+from .forms import MovieCreateForm, MovieFindForm, MovieForm
 from pstats import Stats
 
 
@@ -87,12 +88,25 @@ class MovieListView(ListView):
         return render(request, 'viewmaster/movie_list.html', context)
 
 
+class MovieFindView(LoginRequiredMixin, View):
+    """View for finding movie info to create a movie."""
+    
+    template_name = "viewmaster/find_movie.html"
+    form_class = MovieFindForm
+    initial = {"partial_title": ""}
+    success_url = reverse_lazy('viewmaster:movie-add')
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(initial=self.initial)
+        return render(request, self.template_name, {"form": form})
+
+
 class MovieCreateView(LoginRequiredMixin, CreateView):
     """View for creating a new movie entry."""
     
     model = Movie
     template_name = "viewmaster/add_movie.html"
-    form_class = MovieForm
+    form_class = MovieCreateForm
     success_url = reverse_lazy('viewmaster:movie-list')
 
     def get_initial(self, *args, **kwargs):
