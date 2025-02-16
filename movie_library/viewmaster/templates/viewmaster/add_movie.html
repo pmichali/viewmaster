@@ -10,7 +10,7 @@
       </table>
       <p>
       {% if "http" in form.cover_ref.value %}
-      	<img src="{{ form.cover_ref.value }}" alt="Movie Poster" />
+      	<img src="{{ form.cover_ref.value }}" width="100" alt="Movie Poster" />
       {% endif %}
       </p>
       <input type="submit" value="Save" class="btn btn-primary">

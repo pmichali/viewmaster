@@ -10,6 +10,7 @@ import simplejson
 
 
 logger = logging.getLogger(__name__)
+OMDB_REST_API = "http://www.omdbapi.com/?apikey=REDACTED"
 
 
 class APIFailure(Exception):
@@ -28,12 +29,8 @@ class RESTClient:
         self.server_base_url = server_base_url
         self.handler = handler
 
-    def get(self, partial_title, timeout=30) -> dict:
-        """Handle get requests."""
-        # http://www.omdbapi.com/?apikey=<KEY>&s=Die%20Hard%2A    searches , use '*' for wildcard
-        # http://www.omdbapi.com/?apikey=<KEY>&t=Die%20Hard%202   matches title (can be > 1)
-        # http://www.omdbapi.com/?apikey=<KEY>&i=tt0112864     By ID. can use ID and title        
-        endpoint = f"{self.server_base_url}&type=movie&s={urllib.parse.quote(partial_title)}"
+    def request_to(self, endpoint, timeout=30) -> dict:
+        """Send a GET request to OMDb."""
         logger.info("GET request to %s", endpoint)
         try:
             r = requests.get(endpoint, timeout=timeout)
@@ -54,4 +51,24 @@ class RESTClient:
         raise RequestFailed(
             f"GET request {endpoint} failed: {fail_details} ({r.status_code})"
         )
+
+def search_movies(partial_title, timeout=30) -> dict:
+    """Find movies matching a title phrase.
+    
+    Use asterisk as wildcard. Format of call for "Die Hard*" is:
+        http://www.omdbapi.com/?apikey=<KEY>&s=Die%20Hard%2A
+        
+    Can optionally restrict type with &type={movies,series,episode,game?}.
+
+    """
+    omdb_client = RESTClient(OMDB_REST_API)
+    endpoint = f"{omdb_client.server_base_url}&s={urllib.parse.quote(partial_title)}"
+    return omdb_client.request_to(endpoint, timeout)
+
+def get_movie(movie_id, timeout=30) -> dict:
+    """Get a specific movie by ID."""
+    omdb_client = RESTClient(OMDB_REST_API)
+    endpoint = f"{omdb_client.server_base_url}&i={movie_id}"
+    return omdb_client.request_to(endpoint, timeout)
+
 

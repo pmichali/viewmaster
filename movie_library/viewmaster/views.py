@@ -12,7 +12,8 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
-from .api import RESTClient
+from .api import get_movie, search_movies
+from .extractors import extract_genre_choices, extract_rating, extract_time
 from .models import Movie
 from .forms import MovieCreateForm, MovieFindForm, MovieForm
 from pstats import Stats
@@ -118,8 +119,7 @@ class MovieFindResultsView(LoginRequiredMixin, ListView):
         partial_title = request.POST.get("partial_title")
         candidates = []
         if partial_title:
-            omdb_client = RESTClient("http://www.omdbapi.com/?apikey=REDACTED")
-            results = omdb_client.get(partial_title)
+            results = search_movies(partial_title)
             success = results.get("Response", "Missing")
             count = results.get("totalResults", "Unknown")
             matches = results.get("Search", [])
@@ -140,25 +140,43 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
     model = Movie
     template_name = "viewmaster/add_movie.html"
     form_class = MovieCreateForm
-    initial = {
-        'title': '',
-        'format': '4K',
-        'bad': False
-    }
     success_url = reverse_lazy('viewmaster:movie-list')
 
     def get(self, request, *args, **kwargs):
         logger.debug("ARGS %s, KWARGS %s", args, kwargs)
-        form = self.form_class(initial=self.initial)
+        movie_id = kwargs.get("movie_id", "")
+        initial = {
+            'movie_id': '',
+            'title': '',
+            'format': '4K',
+            # 'bad': False,
+        }
+        if movie_id:
+            logger.debug("Have movie ID '%s' to pre-fill info", movie_id)
+            results = get_movie(movie_id)
+            success = results.get("Response", "Unknown")
+            if success == "True":
+                initial.update(
+                    {
+                        'movie_id': movie_id,
+                        'title': results.get('Title', ''),
+                        'release': int(results.get('Year','')),
+                        'rating': extract_rating(results.get('Rated', '?')),
+                        'duration': extract_time(results.get('Runtime', 'Missing runtime')),
+                        'plot': results.get('Plot', ''),
+                        'actors': results.get('Actors', ''),
+                        'directors': results.get('Director', ''),
+                        'cover_ref': results.get('Poster', ''),
+                        'category': '',
+                        'category_choices': extract_genre_choices(results.get('GENRE', '')),
+                    }
+                )
+            else:
+                error = results.get("Error", "Unknown")
+                logger.error("Unable to get movie '%s': Success=%s Error=%s", movie_id, success, error)
+        logger.debug("Initial values: %s", initial)
+        form = self.form_class(initial=initial)
         return render(request, self.template_name, {"form": form})
-
-    # def get_initial(self, *args, **kwargs):
-    #     """Set default values whenc creating a new movie."""
-    #     initial = super(MovieCreateView, self).get_initial(**kwargs)
-    #     logger.debug("ARGS %s, KWARGS %s", args, kwargs)
-    #     initial['format'] = '4K'
-    #     initial['bad'] = False
-    #     return initial
 
 
 class MovieUpdateView(LoginRequiredMixin, UpdateView):

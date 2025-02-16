@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.forms import CharField, DateInput, Form, HiddenInput, ModelForm, TextInput, TimeInput
+from django.forms import CharField, DateInput, Form, HiddenInput, ModelForm, Textarea, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
 from .models import Movie
@@ -37,9 +37,17 @@ class MovieCreateForm(ModelForm):
                   'movie_id', 'cover_ref',
                   ]
         widgets = {
-            'title' : TextInput(attrs={'autofocus': True}),
-            'duration' : TimeInput(format='%H:%M'),
+            'title' : TextInput(attrs={'size': 60, 'autofocus': True}),
+            'plot': Textarea(attrs={'cols': 60, 'rows': 3, 'disabled': True}),
+            'actors' : TextInput(attrs={'size': 60, 'disabled': True}),
+            'directors' : TextInput(attrs={'size': 60, 'disabled': True}),
             'release' : DateInput(format='%Y'),
+            'duration' : TimeInput(format='%H:%M', attrs={'size': 6}),
+            'aspect': TextInput(attrs={'size': 10}),
+            'audio': TextInput(attrs={'size': 10}),
+            'collection': TextInput(attrs={'size': 10}),
+            'cost': TextInput(attrs={'size': 6}),
+            'movie_id': TextInput(attrs={'size':12, 'disabled': True})
         }
 
     def __init__(self, *args, **kwargs):
@@ -56,10 +64,6 @@ class MovieCreateForm(ModelForm):
                         'data-bs-placement':'right',
                     }
                 )
-        self.fields['plot'].disabled = True
-        self.fields['actors'].disabled = True
-        self.fields['directors'].disabled = True
-        self.fields['movie_id'].disabled = True
         self.fields['cover_ref'].widget = HiddenInput()
 
     def clean_release(self):
