@@ -1,9 +1,15 @@
+import logging
+
 from datetime import datetime
 
-from django.forms import CharField, DateInput, Form, HiddenInput, ModelForm, Textarea, TextInput, TimeInput
+from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, ModelForm
+from django.forms import Textarea, NumberInput, Select, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
 from .models import Movie
+
+
+logger = logging.getLogger(__name__)
 
 
 class MovieFindForm(Form):
@@ -46,13 +52,23 @@ class MovieCreateForm(ModelForm):
             'aspect': TextInput(attrs={'size': 10}),
             'audio': TextInput(attrs={'size': 10}),
             'collection': TextInput(attrs={'size': 10}),
-            'cost': TextInput(attrs={'size': 6}),
-            'movie_id': TextInput(attrs={'size':12, 'disabled': True})
+            'cost': NumberInput(attrs={'size': 6}),
+            'movie_id': TextInput(attrs={'size':12, 'disabled': True}),
+            'cover_ref': HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         """Enabling tool tips for the form."""
+        logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
         super(MovieCreateForm, self).__init__(*args, **kwargs)
+
+        if kwargs.get('initial') and kwargs['initial'].get('category_choices'):
+            # Create new form field to be able to set the choices. If try to just change
+            # the choices attribute, it will be ignored, as there is one already.
+            new_choices = kwargs['initial']['category_choices']
+            self.fields['category'] = ChoiceField(choices=new_choices)
+            logger.debug("Overriding choices")
+        # Set help text...
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
@@ -64,7 +80,6 @@ class MovieCreateForm(ModelForm):
                         'data-bs-placement':'right',
                     }
                 )
-        self.fields['cover_ref'].widget = HiddenInput()
 
     def clean_release(self):
         """Ensure a four-digit year is entered, that is not in the future."""
