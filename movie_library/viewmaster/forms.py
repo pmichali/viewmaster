@@ -19,6 +19,7 @@ class MovieFindForm(Form):
                 'data-bs-toggle':'tooltip',
                 'title': 'Enter partial movie title. Use "*" for wildcard',
                 'data-bs-placement':'right',
+                'placeholder': 'Title to find...',
             }
         )
 
