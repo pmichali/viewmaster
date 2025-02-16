@@ -13,7 +13,7 @@ from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from .api import get_movie, search_movies
-from .extractors import extract_genre_choices, extract_rating, extract_time
+from .extractors import extract_rating, extract_time, order_genre_choices
 from .models import Movie
 from .forms import MovieCreateForm, MovieFindForm, MovieForm
 from pstats import Stats
@@ -143,14 +143,15 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('viewmaster:movie-list')
 
     def get(self, request, *args, **kwargs):
-        logger.debug("ARGS %s, KWARGS %s", args, kwargs)
+        logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
         movie_id = kwargs.get("movie_id", "")
         initial = {
             'movie_id': '',
             'title': '',
             'format': '4K',
-            # 'bad': False,
+            'category': '',
         }
+        suggested_genres = ''
         if movie_id:
             logger.debug("Have movie ID '%s' to pre-fill info", movie_id)
             results = get_movie(movie_id)
@@ -167,13 +168,13 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
                         'actors': results.get('Actors', ''),
                         'directors': results.get('Director', ''),
                         'cover_ref': results.get('Poster', ''),
-                        'category': '',
-                        'category_choices': extract_genre_choices(results.get('GENRE', '')),
                     }
                 )
+                suggested_genres = results.get('Genre', '')
             else:
                 error = results.get("Error", "Unknown")
                 logger.error("Unable to get movie '%s': Success=%s Error=%s", movie_id, success, error)
+        initial.update({'category_choices': order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial)
         return render(request, self.template_name, {"form": form})

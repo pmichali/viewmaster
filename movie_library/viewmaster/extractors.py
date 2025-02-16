@@ -30,10 +30,27 @@ def extract_rating(rating):
     return RATINGS_DICT.get(rating, '?')
 
 
-def extract_genre_choices(genres):
-    """Verify valid genres and form list of allowable values."""
-    all_genres = [g.upper() for g in genres.split(", ")]
-    logger.debug("have genres: %s", all_genres)
-    return CATEGORY_CHOICES[0][1]
+def order_genre_choices(suggested):
+    """Validate provided genre choices and prepend to the list of allowable."""
+    suggested_genres = [g.upper() for g in suggested.split(", ")]
+    if not suggested:
+        logger.debug("No suggested genres, so using defaults")
+        return CATEGORY_CHOICES
+    logger.debug("Have suggested genres: %s", suggested_genres)
+    # Map different spellings to those we support
+    suggested_genres = [sg.replace('ANIMATION', 'ANIMATED') for sg in suggested_genres]
+    suggested_genres = [sg.replace('MUSIC', 'MUSICAL') for sg in suggested_genres]
+    suggested_genres = [sg.replace('SCIENCE FICTION', 'SCI-FI') for sg in suggested_genres]
+    suggested_genres = [sg.replace('WAR', 'MILITARY') for sg in suggested_genres]
+    # Sort them
+    suggested_genres.sort()
+    logger.debug("Modified genres: %s", suggested_genres)
+    # Convert to tuples
+    recommended = [(g, g.lower()) for g in suggested_genres]
+    others = list(set(CATEGORY_CHOICES) - set(recommended))
+    recommended.append(('--------', '--------'))
+    recommended += sorted(others)
+    logger.debug("Final choices %s", recommended)
+    return recommended
     
     
