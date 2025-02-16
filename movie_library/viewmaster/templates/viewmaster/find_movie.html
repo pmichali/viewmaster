@@ -3,12 +3,12 @@
 
 {% block content %}
    <h4>Find Movie</h4>	
-    <form method="post">
+    <form method="post" action="{% url 'viewmaster:movie-find-results' %}">
       {% csrf_token %}
       <table>
         {{ form.as_table }}
       </table>
-      <button class="btn btn-primary">Find</button>
+      <button type="submit" class="btn btn-primary">Find</button>
       <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
     </form>
 {% endblock %}

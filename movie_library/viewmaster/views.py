@@ -1,3 +1,6 @@
+"""Views for the app."""
+
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
@@ -9,9 +12,13 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
+from .api import RESTClient
 from .models import Movie
 from .forms import MovieCreateForm, MovieFindForm, MovieForm
 from pstats import Stats
+
+
+logger = logging.getLogger(__name__)
 
 
 class MovieListView(ListView):
@@ -94,11 +101,37 @@ class MovieFindView(LoginRequiredMixin, View):
     template_name = "viewmaster/find_movie.html"
     form_class = MovieFindForm
     initial = {"partial_title": ""}
-    success_url = reverse_lazy('viewmaster:movie-add')
+    success_url = reverse_lazy('viewmaster:movie-find-results')
 
     def get(self, request, *args, **kwargs):
         form = self.form_class(initial=self.initial)
         return render(request, self.template_name, {"form": form})
+
+
+class MovieFindResultsView(LoginRequiredMixin, ListView):
+    """Show prospective movies, based on the title provided."""
+    template_name = "viewmaster/find_results.html"
+    
+    def post(self, request, **kwargs):
+        """Show candidate movies from OMDb."""
+        logger.debug(request.POST)
+        partial_title = request.POST.get("partial_title")
+        candidates = []
+        if partial_title:
+            omdb_client = RESTClient("http://www.omdbapi.com/?apikey=REDACTED")
+            results = omdb_client.get(partial_title)
+            success = results.get("Response", "Missing")
+            count = results.get("totalResults", "Unknown")
+            matches = results.get("Search", [])
+            logger.debug("Success: %s, Count: %s, Actual %d", success, count, len(matches))
+            # TODO: handle failure (display error and give option to go back? Or go back w/form error?)
+            # TODO: Handle no results (option to go back and retry, or to continue - providing empty choice)
+        context = {
+            'matches': matches,
+            'count': len(matches),
+            'partial_title': partial_title or "",
+        }
+        return render(request, self.template_name, context)
 
 
 class MovieCreateView(LoginRequiredMixin, CreateView):
@@ -107,14 +140,25 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
     model = Movie
     template_name = "viewmaster/add_movie.html"
     form_class = MovieCreateForm
+    initial = {
+        'title': '',
+        'format': '4K',
+        'bad': False
+    }
     success_url = reverse_lazy('viewmaster:movie-list')
 
-    def get_initial(self, *args, **kwargs):
-        """Set default values whenc creating a new movie."""
-        initial = super(MovieCreateView, self).get_initial(**kwargs)
-        initial['format'] = '4K'
-        initial['bad'] = False
-        return initial
+    def get(self, request, *args, **kwargs):
+        logger.debug("ARGS %s, KWARGS %s", args, kwargs)
+        form = self.form_class(initial=self.initial)
+        return render(request, self.template_name, {"form": form})
+
+    # def get_initial(self, *args, **kwargs):
+    #     """Set default values whenc creating a new movie."""
+    #     initial = super(MovieCreateView, self).get_initial(**kwargs)
+    #     logger.debug("ARGS %s, KWARGS %s", args, kwargs)
+    #     initial['format'] = '4K'
+    #     initial['bad'] = False
+    #     return initial
 
 
 class MovieUpdateView(LoginRequiredMixin, UpdateView):

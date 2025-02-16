@@ -1,0 +1,86 @@
+{% extends "viewmaster/base_generic.html" %}
+{% block title %}<title>Find Movie Results</title>{% endblock %}
+
+{% block local_styles %}
+body {
+  # display: flex;
+  # justify-content: center;
+  margin-top: 5px;
+  color: #37559d;
+}
+
+a {
+  color: #5165ff;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td {
+  border: 2px solid #ccd2ff;
+  position: relative;
+}
+
+tr:hover,
+tr:focus-within {
+  background: #f2f3ff;
+  outline: none;
+}
+
+td > a:first-child {
+  display: flex;
+  padding: 1px 2px;
+  text-decoration: none;
+  color: inherit;
+  z-index: 0;
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+{% endblock %}
+
+{% block content %}
+<h4>Find Results for: '{{ partial_title }}'</h4>	
+<table>
+<tbody>
+  <tr>
+    <th>COVER</th>
+    <th>REL</th>
+    <th>TITLE</th>
+    <th>IMDB ID</th>
+  </tr>
+  {% for match in matches %}
+    <tr>
+      <td>
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" class="row-link">
+        {% if "http" in match.Poster %}
+          <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
+        {% else %}
+        N/A
+        {% endif %}
+        </a>
+      </td>
+      <td>
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        {{ match.Year }}
+        </a>
+      </td>
+      <td>
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        {{ match.Title }}
+        </a>
+      </td>
+      <td>
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        {{ match.imdbID }}
+        </a>
+      </td>
+      </a>
+    </tr>
+  {% endfor %}
+</tbody>
+</table>
+{% endblock %}
