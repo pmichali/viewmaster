@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -143,3 +144,41 @@ LOGIN_URL = '/admin/login/'
 
 # To protect from XSS attacks
 SESSION_COOKIE_HTTPONLY = True
+
+LOG_ROOT = os.environ.get('TEST_LOG_ROOT', "/var/log/")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,  # was True Don't need to see request logging too.
+    "formatters": {
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+    },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_ROOT + "/viewmaster.log",
+            "formatter": "standard",
+            "maxBytes": 1024000,
+            "backupCount": 3,
+        },
+    },
+    "loggers": {
+        "viewmaster": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO").upper(),
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}
