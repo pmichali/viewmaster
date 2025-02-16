@@ -63,7 +63,7 @@ class Movie(models.Model):
     aspect = models.CharField(max_length=10, default="?", help_text="Screen aspect ratio (10 chars).")
     audio = models.CharField(max_length=10, default="?", help_text="Main audio format (10 chars).")
     collection = models.CharField(max_length=10, blank=True, default="", help_text="Name for a collection of movies.")
-    cost = models.DecimalField(max_digits=6, decimal_places=2, help_text="In USD.")
+    cost = models.DecimalField(max_digits=5, decimal_places=2, help_text="In USD.")
     paid = models.BooleanField(default=True, help_text="Indicates movie was purchased, versus being a gift.")
     bad = models.BooleanField(default=False, help_text="Indicates that movie is not playable, or has playback issues.")
 
