@@ -44,16 +44,16 @@ class MovieCreateForm(ModelForm):
                   ]
         widgets = {
             'title' : TextInput(attrs={'size': 60, 'autofocus': True}),
-            'plot': Textarea(attrs={'cols': 60, 'rows': 3, 'disabled': True}),
-            'actors' : TextInput(attrs={'size': 60, 'disabled': True}),
-            'directors' : TextInput(attrs={'size': 60, 'disabled': True}),
+            'plot': Textarea(attrs={'cols': 60, 'rows': 3}),
+            'actors' : TextInput(attrs={'size': 60}),
+            'directors' : TextInput(attrs={'size': 60}),
             'release' : DateInput(format='%Y'),
             'duration' : TimeInput(format='%H:%M', attrs={'size': 6}),
             'aspect': TextInput(attrs={'size': 10}),
             'audio': TextInput(attrs={'size': 10}),
             'collection': TextInput(attrs={'size': 10}),
             'cost': NumberInput(attrs={'size': 6}),
-            'movie_id': TextInput(attrs={'size':12, 'disabled': True}),
+            'movie_id': TextInput(attrs={'size':12}),
             'cover_ref': HiddenInput(),
         }
 
