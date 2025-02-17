@@ -1,18 +1,194 @@
 {% extends "viewmaster/base_generic.html" %}
 {% block title %}<title>Add Movie</title>{% endblock %}
 
+{% block local_styles %}
+
+fieldset {
+	width: 800px;
+	margin: 20px;
+	padding: 10px;
+	border: 1px groove;
+	background-color: #eeeeee
+}
+
+.errorlist {
+    margin: 0px;
+    padding: 0px;
+}
+
+.errorlist li {
+    list-style-type: none;
+    color: red;
+    font-weight: bold;
+    margin: 0px;
+    padding: 0px;
+}
+
+#id_plot, #id_actors, #id_directors, #id_movie_id {
+    pointer-events: none;
+}
+
+{% endblock %}
+
 {% block content %}
    <h4>Add Movie</h4>	
     <form method="post">
       {% csrf_token %}
+      <fieldset>
+      <legend>Summary</legend>
       <table>
-        {{ form.as_table }}
+      <tbody>
+        <tr>
+            <td colspan="6">
+              {{ form.non_field_errors }}
+            </td>
+        </tr>
+     	<tr>
+      		<th>
+      		  <label for="{{ form.title.id_for_label }}">Title:</label>
+      		</th>
+      		<td colspan="5">
+      		  {{ form.title.errors }}
+      		  {{ form.title }}
+      		</td>
+      	</tr>
+      	<tr>
+      		<th>
+      		  <label for="{{ form.plot.id_for_label }}">Plot:</label>
+      		</th>
+      		<td colspan="5">
+      		  {{ form.plot }}
+      		</td>
+      	</tr>
+     	<tr>
+      		<th>
+      		  <label for="{{ form.actors.id_for_label }}">Actor(s):</label>
+      		</th>
+      		<td colspan="5">
+      		  {{ form.actors }}
+      		</td>
+      	</tr>
+     	<tr>
+      		<th>
+      		  <label for="{{ form.directors.id_for_label }}">Director(s):</label>
+      		</th>
+      		<td colspan="5">
+      		  {{ form.directors }}
+      		</td>
+      	</tr>
+      </tbody>
+     </table>
+     </fieldset>
+ 
+     <fieldset>
+     <legend>Technical</legend>
+     <table>
+     <tbody>
+    	<tr>
+      		<th>
+      		  <label for="{{ form.release.id_for_label }}">Release:</label>
+      		</th>
+      		<td>
+      		  {{ form.release.errors }}
+      		  {{ form.release }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.rating.id_for_label }}">Rating:</label>
+      		</th>
+      		<td>
+      		  {{ form.rating }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.duration.id_for_label }}">Duration:</label>
+      		</th>
+      		<td>
+      		  {{ form.duration.errors }}
+      		  {{ form.duration }}
+      		</td>
+      	</tr>
+     	<tr>
+      		<th>
+      		  <label for="{{ form.format.id_for_label }}">Format:</label>
+      		</th>
+      		<td>
+      		  {{ form.format }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.category.id_for_label }}">Category:</label>
+      		</th>
+      		<td>
+      		  {{ form.category.errors }}
+      		  {{ form.category }}
+      		</td>
+       	</tr>
+    	<tr>
+      		<th>
+      		  <label for="{{ form.aspect.id_for_label }}">Aspect Ratio:</label>
+      		</th>
+      		<td>
+      		  {{ form.aspect.errors }}
+      		  {{ form.aspect }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.audio.id_for_label }}">Audio:</label>
+      		</th>
+      		<td>
+      		  {{ form.audio.errors }}
+      		  {{ form.audio }}
+      		</td>
+     	</tr>
+     </tbody>
+     </table>
+     </fieldset> 
+ 
+     <fieldset>
+     <legend>Library</legend>
+     <table>
+     <tbody>
+      	<tr>
+      		<th>
+      		  <label for="{{ form.collection.id_for_label }}">Collection:</label>
+      		</th>
+      		<td colspan="2">
+      		  {{ form.collection.errors }}
+      		  {{ form.collection }}
+      		</td>
+       		<th>
+      		  <label for="{{ form.title.id_for_label }}">Movie ID:</label>
+      		</th>
+      		<td colspan="2">
+      		  {{ form.movie_id }}
+      		</td>
+      		<td rowspan="2">
+     		  {% if "http" in form.cover_ref.value %}
+      			<img src="{{ form.cover_ref.value }}" width="100" alt="Movie Poster" />
+      		  {% endif %}
+       		</td>
+      	</tr>
+     	<tr>
+      		<th>
+      		  <label for="{{ form.cost.id_for_label }}">Cost:</label>
+      		</th>
+      		<td>
+      		  {{ form.cost.errors }}
+      		  {{ form.cost }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.paid.id_for_label }}">Paid:</label>
+      		</th>
+      		<td>
+      		  {{ form.paid }}
+      		</td>
+      		<th>
+      		  <label for="{{ form.bad.id_for_label }}">Bad:</label>
+      		</th>
+      		<td>
+      		  {{ form.bad }}
+      		</td>
+      	</tr>
+       </tbody>
       </table>
-      <p>
-      {% if "http" in form.cover_ref.value %}
-      	<img src="{{ form.cover_ref.value }}" width="100" alt="Movie Poster" />
-      {% endif %}
-      </p>
+   	  </fieldset>
       <input type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
     </form>
