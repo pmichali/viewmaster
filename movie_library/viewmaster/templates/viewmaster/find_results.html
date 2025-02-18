@@ -13,11 +13,15 @@ a {
   color: #5165ff;
 }
 
+p {
+	margin-top: 10px;
+}
+
 table {
   border-collapse: collapse;
 }
 
-td {
+td, th {
   border: 2px solid #ccd2ff;
   position: relative;
 }
@@ -55,7 +59,7 @@ td > a:first-child {
   {% for match in matches %}
     <tr>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" class="row-link">
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}" class="row-link">
         {% if "http" in match.Poster %}
           <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
         {% else %}
@@ -64,17 +68,17 @@ td > a:first-child {
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}" tabindex="-1" class="row-link">
         {{ match.Year }}
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}" tabindex="-1" class="row-link">
         {{ match.Title }}
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}" tabindex="-1" class="row-link">
         {{ match.imdbID }}
         </a>
       </td>
@@ -83,4 +87,7 @@ td > a:first-child {
   {% endfor %}
 </tbody>
 </table>
+<p>
+<button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
+</p>
 {% endblock %}
