@@ -124,8 +124,15 @@ class MovieFindResultsView(LoginRequiredMixin, ListView):
             count = results.get("totalResults", "Unknown")
             matches = results.get("Search", [])
             logger.debug("Success: %s, Count: %s, Actual %d", success, count, len(matches))
-            # TODO: handle failure (display error and give option to go back? Or go back w/form error?)
-            # TODO: Handle no results (option to go back and retry, or to continue - providing empty choice)
+            if not matches:
+                matches = [
+                    {
+                        "Title": partial_title,
+                        "Year": "",
+                        "imdbID": "unknown",
+                        "Poster": ""
+                    },
+                ]
         context = {
             'matches': matches,
             'count': len(matches),
@@ -144,22 +151,23 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
         logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
-        movie_id = kwargs.get("movie_id", "")
+        title = request.GET.get('title') or ''
+        logger.debug("Title: %s", title)
+        movie_id = kwargs.get("movie_id", "unknown")
         initial = {
-            'movie_id': '',
-            'title': '',
+            'movie_id': movie_id,
+            'title': title,
             'format': '4K',
             'category': '',
         }
         suggested_genres = ''
-        if movie_id:
+        if movie_id != "unknown":
             logger.debug("Have movie ID '%s' to pre-fill info", movie_id)
             results = get_movie(movie_id)
             success = results.get("Response", "Unknown")
             if success == "True":
                 initial.update(
                     {
-                        'movie_id': movie_id,
                         'title': results.get('Title', ''),
                         'release': extract_year(results.get('Year','')),
                         'rating': extract_rating(results.get('Rated', '?')),

@@ -1,6 +1,12 @@
 {% extends "viewmaster/base_generic.html" %}
 {% block title %}<title>Find Movie</title>{% endblock %}
 
+{% block local_styles %}
+p {
+	margin-top: 10px;
+}
+{% endblock %}
+
 {% block content %}
    <h4>Find Movie</h4>	
     <form method="post" action="{% url 'viewmaster:movie-find-results' %}">
@@ -8,7 +14,9 @@
       <table>
         {{ form.as_table }}
       </table>
-      <button type="submit" class="btn btn-primary">Find</button>
-      <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
+      <p>
+        <button type="submit" class="btn btn-primary">Find</button>
+        <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
+      </p>
     </form>
 {% endblock %}
