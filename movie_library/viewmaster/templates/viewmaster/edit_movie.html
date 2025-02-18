@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block more-js %}
+<script>
 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
   return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -30,4 +31,5 @@ document.getElementById("deleteBtn").onclick = function () {
     window.location.href = "{% url 'viewmaster:movie-delete' movie.id %}";
     return false;  // So that form is not submitted and form URL used
 }
+</script>
 {% endblock %}
