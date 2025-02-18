@@ -217,7 +217,8 @@ th {
       </table>
    	  </fieldset>
       <input id="save" type="submit" value="Save" class="btn btn-primary">
-      <button class="btn btn-info" onclick="javascript:history.back();">Cancel</button>
+      <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
+      <button class="btn btn-info" onclick="window.location.href='{% url 'viewmaster:movie-list' %}'">Cancel</button>
     </form>
 {% endblock %}
 

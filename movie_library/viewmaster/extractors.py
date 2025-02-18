@@ -45,7 +45,9 @@ def order_genre_choices(suggested):
     suggested_genres = [g.upper() for g in suggested.split(", ")]
     if not suggested:
         logger.debug("No suggested genres, so using defaults")
-        return CATEGORY_CHOICES
+        recommended = [('', '--------')]
+        recommended += CATEGORY_CHOICES
+        return recommended
     logger.debug("Have suggested genres: %s", suggested_genres)
     # Map different spellings to those we support
     suggested_genres = [sg.replace('ANIMATION', 'ANIMATED') for sg in suggested_genres]

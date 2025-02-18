@@ -71,7 +71,7 @@ class Movie(models.Model):
     actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
     directors = models.CharField(blank=True, default="", help_text="Director(s) (imported)")
     cover_ref = models.URLField(blank=True, default="", help_text="URL where poster image is located (imported)")
-    movie_id = models.CharField(blank=True, default="", help_text="IMDB movie ID (imported)")
+    movie_id = models.CharField(blank=True, default="unknown", help_text="IMDB movie ID (imported)")
 
     def get_absolute_url(self):
         """Link used when updating movie?"""
