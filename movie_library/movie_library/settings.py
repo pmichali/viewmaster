@@ -129,9 +129,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
+HOSTNAME = os.environ.get('HOSTNAME', 'localhost')
 STATIC_URL = 'static/'
-STATIC_ROOT = '/vol/web/static'
+if 'viewmaster' in HOSTNAME:
+    STATIC_ROOT = '/vol/web/static'
+else:
+    STATIC_ROOT = str(BASE_DIR / "public/static")
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
