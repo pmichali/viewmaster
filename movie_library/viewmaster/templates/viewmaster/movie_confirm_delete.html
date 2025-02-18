@@ -16,9 +16,11 @@
 
 
 {% block more-js %}
+<script>
 // Redirect to list, without submitting form and deleting
 document.getElementById("cancelBtn").onclick = function () {
     window.location.href = "{% url 'viewmaster:movie-list' %}";
     return false;  // So that form is not submitted and form URL is not used
 }
+</script>
 {% endblock %}

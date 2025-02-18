@@ -48,7 +48,7 @@ def order_genre_choices(suggested):
     # Convert to tuples
     recommended = [(g, g.lower()) for g in suggested_genres]
     others = list(set(CATEGORY_CHOICES) - set(recommended))
-    recommended.append(('--------', '--------'))
+    recommended.append(('', '--------'))
     recommended += sorted(others)
     logger.debug("Final choices %s", recommended)
     return recommended
