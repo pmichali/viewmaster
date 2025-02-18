@@ -232,10 +232,15 @@ $(document).ready(function () {
                        return false;
                    }
                }
-           }
-       },
+           },
+	       release: {
+	    	      required: true,
+	    	      min: 1900
+	    	    }
+	       },
        messages: {
            category: "You must select a genre",
+           release: "Year must be 1900 or more."
        },
    });
 
