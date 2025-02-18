@@ -11,6 +11,11 @@ fieldset {
 	background-color: #eeeeee
 }
 
+.fs_table {
+	table-layout: fixed;
+	width: 780px;
+}
+
 .errorlist {
     margin: 0px;
     padding: 0px;
@@ -58,7 +63,7 @@ th {
       {% csrf_token %}
       <fieldset>
       <legend>Summary</legend>
-      <table>
+      <table class="fs_table">
       <tbody>
         <tr>
             <td colspan="6">
@@ -104,7 +109,7 @@ th {
  
      <fieldset>
      <legend>Technical</legend>
-     <table>
+     <table class="fs_table">
      <tbody>
     	<tr>
       		<th>
@@ -165,7 +170,7 @@ th {
  
      <fieldset>
      <legend>Library</legend>
-     <table>
+     <table class="fs_table">
      <tbody>
       	<tr>
       		<th>
@@ -236,13 +241,24 @@ $(document).ready(function () {
 	       release: {
 	    	      required: true,
 	    	      min: 1900
-	    	    }
 	       },
+	       duration: {
+	    	   time24: true
+	       },
+       },
        messages: {
-           category: "You must select a genre",
-           release: "Year must be 1900 or more."
+           category: "Select a genre",
+           release: "Year must be 1900 or more",
+           duration: "Invalid time format",
        },
    });
+
+   $.validator.addMethod("time24", function(value, element) {
+	    if (!/^([01]?[0-9]|2[0-3])(:[0-5][0-9])$/.test(value)) return false;
+	    var parts = value.split(':');
+	    if (parts[0] > 23 || parts[1] > 59) return false;
+	    return true;
+	}, "Invalid time format.");
 
 });
 </script>
