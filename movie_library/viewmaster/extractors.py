@@ -1,6 +1,7 @@
 """Extract ReST API info and convert for storage."""
 
 import logging
+import re
 
 from .models import CATEGORY_CHOICES, RATING_CHOICES
 
@@ -9,6 +10,7 @@ RATINGS_DICT = dict(RATING_CHOICES)
 RATINGS_DICT['Not Rated'] = 'NR'
 
 logger = logging.getLogger(__name__)
+year_re = re.compile(r'\d+')
 
 
 def extract_time(time_str):
@@ -28,6 +30,14 @@ def extract_time(time_str):
 def extract_rating(rating):
     """Ensure rating within set of known ratings."""
     return RATINGS_DICT.get(rating, '?')
+
+
+def extract_year(year):
+    """Ensure year is just a number."""
+    m = year_re.match(year)
+    if not m:
+        return 0
+    return int(m.group())
 
 
 def order_genre_choices(suggested):

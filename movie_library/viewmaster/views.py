@@ -13,7 +13,7 @@ from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from .api import get_movie, search_movies
-from .extractors import extract_rating, extract_time, order_genre_choices
+from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
 from .forms import MovieCreateForm, MovieFindForm, MovieForm
 from pstats import Stats
@@ -161,7 +161,7 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
                     {
                         'movie_id': movie_id,
                         'title': results.get('Title', ''),
-                        'release': int(results.get('Year','')),
+                        'release': extract_year(results.get('Year','')),
                         'rating': extract_rating(results.get('Rated', '?')),
                         'duration': extract_time(results.get('Runtime', 'Missing runtime')),
                         'plot': results.get('Plot', ''),
