@@ -1,62 +1,11 @@
 {% extends "viewmaster/base_generic.html" %}
 {% block title %}<title>Add Movie</title>{% endblock %}
 
-{% block local_styles %}
-
-fieldset {
-	width: 800px;
-	margin: 20px;
-	padding: 10px;
-	border: 1px groove;
-	background-color: #eeeeee
-}
-
-.fs_table {
-	table-layout: fixed;
-	width: 780px;
-}
-
-.errorlist {
-    margin: 0px;
-    padding: 0px;
-}
-
-.errorlist li {
-    list-style-type: none;
-    color: red;
-	font-weight: bold;
-    font-size: 80%;
-    margin: 0px;
-    padding: 0px;
-}
-
-label.error {
-	color: red;
-	font-weight: bold;
-	font-size: 80%;
-	display: block;
-}
-
-select.error {
-	color: red;
-	border: 2px solid red;
-	background-color: #FFFFD5;
-}
-
-#id_plot, #id_actors, #id_directors, #id_movie_id {
-    pointer-events: none;
-}
-
-th, td {
-	padding-right: 4px;
-}
-
-th {
-	text-align: right;
-}
-
+{% block css %}
+  {% load static %}
+  <link href="{% static 'viewmaster/css/forms.css' %}" media="all" rel="stylesheet" type="text/css" />
 {% endblock %}
-
+ 
 {% block content %}
    <h4>Add Movie</h4>	
     <form id="add-form" method="post">
@@ -222,47 +171,9 @@ th {
     </form>
 {% endblock %}
 
-{% block more-js %}
-
-<script nonce="{{request.csp_nonce}}">
-$(document).ready(function () {
-	
-   $("#add-form").validate({
-       debug: false,
-       rules: {
-           category: {
-               required: function () {
-                   if ($("#id_category option[value='']")) {
-                       return true;
-                   } else {
-                       return false;
-                   }
-               }
-           },
-	       release: {
-	    	      required: true,
-	    	      min: 1900
-	       },
-	       duration: {
-	    	   time24: true
-	       },
-       },
-       messages: {
-           category: "Select a genre",
-           release: "Year must be 1900 or more",
-           duration: "Invalid time format",
-       },
-   });
-
-   $.validator.addMethod("time24", function(value, element) {
-	    if (!/^([01]?[0-9]|2[0-3])(:[0-5][0-9])$/.test(value)) return false;
-	    var parts = value.split(':');
-	    if (parts[0] > 23 || parts[1] > 59) return false;
-	    return true;
-	}, "Invalid time format.");
-
-});
-</script>
-
+{% block javascript %}
+  {% load static %}
+  <script nonce="{{request.csp_nonce}}" src="{% static 'viewmaster/js/form-validator.js' %}"></script>
+  <script nonce="{{request.csp_nonce}}" src="{% static 'viewmaster/js/enhanced-tool-tips.js' %}"></script>
 {% endblock %}
 

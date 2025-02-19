@@ -56,17 +56,17 @@ class Movie(models.Model):
 
     title = models.CharField(max_length=60, help_text="Up to 60 characters for title.")
     release = models.IntegerField(help_text="Four digit year of release.")
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    rating = models.CharField(max_length=5, default="?", choices=RATING_CHOICES)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, help_text="Select a genre")
+    rating = models.CharField(max_length=5, default="?", choices=RATING_CHOICES, help_text="Select the MPAA rating")
     duration = models.TimeField(help_text="Duration in hh:mm format.")
-    format = models.CharField(max_length=3, choices=FORMAT_CHOICES)
+    format = models.CharField(max_length=3, choices=FORMAT_CHOICES, help_text="Select media format")
     aspect = models.CharField(max_length=10, default="?", help_text="Screen aspect ratio (10 chars).")
     audio = models.CharField(max_length=10, default="?", help_text="Main audio format (10 chars).")
     collection = models.CharField(max_length=10, blank=True, default="", help_text="Name for a collection of movies.")
     cost = models.DecimalField(max_digits=5, decimal_places=2, help_text="In USD.")
     paid = models.BooleanField(default=True, help_text="Indicates movie was purchased, versus being a gift.")
     bad = models.BooleanField(default=False, help_text="Indicates that movie is not playable, or has playback issues.")
-
+    # New fields...
     plot = models.CharField(blank=True, default="", help_text="Plot summary (imported)")
     actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
     directors = models.CharField(blank=True, default="", help_text="Director(s) (imported)")
