@@ -15,7 +15,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from .api import get_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
-from .forms import MovieCreateForm, MovieFindForm, MovieForm
+from .forms import MovieCreateEditForm, MovieFindForm
 from pstats import Stats
 
 
@@ -146,7 +146,7 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
     
     model = Movie
     template_name = "viewmaster/add_movie.html"
-    form_class = MovieCreateForm
+    form_class = MovieCreateEditForm
     success_url = reverse_lazy('viewmaster:movie-list')
 
     def get(self, request, *args, **kwargs):
@@ -193,7 +193,7 @@ class MovieUpdateView(LoginRequiredMixin, UpdateView):
     
     model = Movie
     template_name = "viewmaster/edit_movie.html"
-    form_class = MovieForm
+    form_class = MovieCreateEditForm
     success_url = reverse_lazy('viewmaster:movie-list')
 
 

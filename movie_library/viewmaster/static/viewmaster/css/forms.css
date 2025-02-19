@@ -1,0 +1,51 @@
+fieldset {
+	width: 800px;
+	margin: 20px;
+	padding: 10px;
+	border: 1px groove;
+	background-color: #eeeeee
+}
+
+.fs_table {
+	table-layout: fixed;
+	width: 780px;
+}
+
+.errorlist {
+    margin: 0px;
+    padding: 0px;
+}
+
+.errorlist li {
+    list-style-type: none;
+    color: red;
+	font-weight: bold;
+    font-size: 80%;
+    margin: 0px;
+    padding: 0px;
+}
+
+label.error {
+	color: red;
+	font-weight: bold;
+	font-size: 80%;
+	display: block;
+}
+
+select.error {
+	color: red;
+	border: 2px solid red;
+	background-color: #FFFFD5;
+}
+
+#id_plot, #id_actors, #id_directors, #id_movie_id {
+    pointer-events: none;
+}
+
+th, td {
+	padding-right: 4px;
+}
+
+th {
+	text-align: right;
+}
