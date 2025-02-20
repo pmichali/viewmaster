@@ -6,8 +6,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render, reverse
 from django.urls import reverse, reverse_lazy
+from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
@@ -110,14 +111,28 @@ class MovieFindView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form})
 
 
-class MovieFindResultsView(LoginRequiredMixin, ListView):
+class MovieFindResultsView(LoginRequiredMixin, View):
     """Show prospective movies, based on the title provided."""
     template_name = "viewmaster/find_results.html"
     
+    def get(self, request, *args, **kwargs):
+        """Show candidate movies from OMDBb for an edit request."""
+        logger.debug("Find Results GET: ARGS %s, KWARGS %s", args, kwargs)
+        logger.debug("REQUEST %s", dict(request.GET))
+        title = request.GET.get("title", "missing title")
+        existing_id = request.GET.get("identifier", 0)
+        return self.get_all_candidates(request, title, existing_id)
+        
     def post(self, request, **kwargs):
-        """Show candidate movies from OMDb."""
-        logger.debug(request.POST)
+        """Show candidate movies from OMDb for an add request."""
+        logger.debug("Find Results POST: %s KWARGS %s", request.POST, kwargs)
         partial_title = request.POST.get("partial_title")
+        return self.get_all_candidates(request, partial_title)
+    
+    
+    def get_all_candidates(self, request, partial_title, existing_id=0):
+        """Obtain all possible candidates and display them."""
+        logging.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
         candidates = []
         if partial_title:
             results = search_movies(partial_title)
@@ -138,11 +153,12 @@ class MovieFindResultsView(LoginRequiredMixin, ListView):
             'matches': matches,
             'count': len(matches),
             'partial_title': partial_title or "",
+            'identifier': existing_id,
         }
         return render(request, self.template_name, context)
 
 
-class MovieCreateView(LoginRequiredMixin, CreateView):
+class MovieCreateView(LoginRequiredMixin, UpdateView):
     """View for creating a new movie entry."""
     
     model = Movie
@@ -151,28 +167,55 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('viewmaster:movie-list')
 
     def get(self, request, *args, **kwargs):
-        logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
-        title = request.GET.get('title') or ''
-        logger.debug("Title: %s", title)
+        logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
         movie_id = kwargs.get("movie_id", "unknown")
-        initial = {
-            'movie_id': movie_id,
-            'title': title,
-            'format': '4K',
-            'category': '',
-        }
-        suggested_genres = ''
-        if movie_id != "unknown":
-            logger.debug("Have movie ID '%s' to pre-fill info", movie_id)
+        title = request.GET.get('title') or ''
+        identifier = int(request.GET.get('pk', 0))
+        logger.debug("MovieID: %s, Title: %s, identifier: %d", movie_id, title, identifier)
+
+
+        initial = {}
+        suggested_genres = ""
+        movie = None
+        if identifier:  # Edit movie
+            movie = Movie.objects.get(pk=identifier)
+            logger.debug("EXISTING MOVIE: %s", movie)
+            need_movie_info = (movie.movie_id == "" or movie.movie_id == "unknown")
+        else:  # Add movie
+            need_movie_info = True
+            initial.update(
+                {
+                    'title': title,
+                    'category': '',
+                    'format': '4K',
+                }
+            )
+        if need_movie_info and movie_id != "unknown":
+            logger.debug("Looking up OMDb entry %s", movie_id)
             results = get_movie(movie_id)
             success = results.get("Response", "Unknown")
             if success == "True":
+                rating = extract_rating(results.get('Rated', '?'))
+                duration = extract_time(results.get('Runtime', 'Missing runtime'))
+          
+                if not identifier:  # New movie
+                    initial.update(
+                        {
+                            'title': results.get('Title', ''),
+                            'release': extract_year(results.get('Year','')),
+                            'rating': extract_rating(results.get('Rated', '?')),
+                            'duration': extract_time(results.get('Runtime', 'Missing runtime')),
+                        }
+                    )
+                else:
+                    if movie.rating != rating:
+                        logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
+                    if movie.duration != duration:
+                        logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
+
                 initial.update(
                     {
-                        'title': results.get('Title', ''),
-                        'release': extract_year(results.get('Year','')),
-                        'rating': extract_rating(results.get('Rated', '?')),
-                        'duration': extract_time(results.get('Runtime', 'Missing runtime')),
+                        'movie_id': results.get("imdbID"),
                         'plot': results.get('Plot', ''),
                         'actors': results.get('Actors', ''),
                         'directors': results.get('Director', ''),
@@ -180,13 +223,14 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
                     }
                 )
                 suggested_genres = results.get('Genre', '')
+                initial.update({'category_choices': order_genre_choices(suggested_genres)})
+                logger.debug("Initial values: %s", initial)
             else:
-                error = results.get("Error", "Unknown")
-                logger.error("Unable to get movie '%s': Success=%s Error=%s", movie_id, success, error)
+                logging.error("Unable to get movie info for %s", movie_id)
         initial.update({'category_choices': order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
-        form = self.form_class(initial=initial)
-        return render(request, self.template_name, {"form": form})
+        form = self.form_class(initial=initial, instance=movie)
+        return render(request, self.template_name, {"form": form, 'movie': movie})
 
 
 class MovieLookupView(LoginRequiredMixin, UpdateView):
@@ -209,34 +253,17 @@ class MovieLookupView(LoginRequiredMixin, UpdateView):
         initial = {}
         if not movie.movie_id or movie.movie_id == "unknown":
             logging.debug("Movie does not have OMDb info")
-            results = lookup_movie(movie.title, movie.release)
-            success = results.get("Response")
-            if success == "True":
-                logger.debug("Found a match in OMDb!")
-                rating = extract_rating(results.get('Rated', '?'))
-                duration = extract_time(results.get('Runtime', 'Missing runtime'))
-                
-                if movie.rating != rating:
-                    logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
-                if movie.duration != duration:
-                    logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
-                
-                initial.update(
-                    {
-                        'movie_id': results.get("imdbID", "unknown"),
-                        'plot': results.get('Plot', ''),
-                        'actors': results.get('Actors', ''),
-                        'directors': results.get('Director', ''),
-                        'cover_ref': results.get('Poster', ''),
-                    }
-                )
-                suggested_genres = results.get('Genre', '')
-                initial.update({'category_choices': order_genre_choices(suggested_genres)})
-                logger.debug("Initial values: %s", initial)
-        form = self.form_class(initial=initial, instance=movie)
-        return render(request, self.template_name, {"form": form, "movie": movie})
 
+            return redirect(reverse('viewmaster:movie-find-results') +
+                            f"?{urlencode({'title': movie.title, 'identifier': movie.id})}")
 
+        logger.debug("Movie already has OMDb info")
+        return redirect(
+            reverse('viewmaster:movie-add', kwargs={'movie_id': movie.movie_id}) +
+                     f"?{urlencode({'title': movie.title, 'pk': movie.id})}"
+        )
+
+# REMOVE?
 class MovieUpdateView(LoginRequiredMixin, UpdateView):
     """View for changing existing movie details."""
     
