@@ -117,11 +117,12 @@ class Movie(models.Model):
     def __str__(self):
         """Show the movie entry for debug."""
         return (
-            f"title='{self.title}' ({self.id}) cat={self.category} release={self.release} "
+            f"title='{self.title}' ({self.id}) plot='{self.plot}' actors='{self.actors}' "
+            f"directors='{self.directors}' cat={self.category} release={self.release} "
             f"rating={self.rating} duration={self.duration_str} format={self.format} "
             f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
-            f"cost=${self.cost:6.2f} paid={'y' if self.paid else 'N'} "
-            f"bad={'Y' if self.bad else 'N'}"
+            f"movie_id={self.movie_id} cost=${self.cost:6.2f} "
+            f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'}"
         )
 
 
