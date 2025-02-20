@@ -65,6 +65,12 @@ def search_movies(partial_title, timeout=30) -> dict:
     endpoint = f"{omdb_client.server_base_url}&s={urllib.parse.quote(partial_title)}"
     return omdb_client.request_to(endpoint, timeout)
 
+def lookup_movie(title, release, timeout=30) -> dict:
+    """Find movies matching a title and release date."""
+    omdb_client = RESTClient(OMDB_REST_API)
+    endpoint = f"{omdb_client.server_base_url}&t={urllib.parse.quote(title)}&y={release}"
+    return omdb_client.request_to(endpoint, timeout)
+
 def get_movie(movie_id, timeout=30) -> dict:
     """Get a specific movie by ID."""
     omdb_client = RESTClient(OMDB_REST_API)
