@@ -189,7 +189,7 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
         return render(request, self.template_name, {"form": form})
 
 
-class MovieLookupView(LoginRequiredMixin, DetailView):
+class MovieLookupView(LoginRequiredMixin, UpdateView):
     """Show prospective movies, based on the title and release date provided."""
     # template_name = "viewmaster/find_results.html"   # TODO CHANGE!!!!
     model = Movie
@@ -225,34 +225,17 @@ class MovieLookupView(LoginRequiredMixin, DetailView):
             logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
         
         initial = {
-        #     'id' : movie.id,
-        #     'title': movie.title,
-        #     'release': movie.release,
-        #     'category': movie.category,
-        #     'rating': movie.rating,
-        #     'duration': movie.duration,
-        #     'format': movie.format,
-        #     'aspect': movie.aspect,
-        #     'audio': movie.audio,
-        #     'collection': movie.collection,
-        #     'cost': movie.cost,
-        #     'paid': movie.paid,
-        #     'bad': movie.bad,
-        # }
-        # initial.update(
-        #     {
-        #         'movie_id': results.get("imdbID", "unknown"),
-                'plot': results.get('Plot', ''),
-                'actors': results.get('Actors', ''),
-                'directors': results.get('Director', ''),
-                'cover_ref': results.get('Poster', ''),
+            'movie_id': results.get("imdbID", "unknown"),
+            'plot': results.get('Plot', ''),
+            'actors': results.get('Actors', ''),
+            'directors': results.get('Director', ''),
+            'cover_ref': results.get('Poster', ''),
         }
-        # )
         suggested_genres = results.get('Genre', '')
         initial.update({'category_choices': order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
-        form = self.form_class(initial={}, instance=movie)
-        return render(request, self.template_name, {"form": form})
+        form = self.form_class(initial=initial, instance=movie)
+        return render(request, self.template_name, {"form": form, "movie": movie})
 
 
 class MovieUpdateView(LoginRequiredMixin, UpdateView):
