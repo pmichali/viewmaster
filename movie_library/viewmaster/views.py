@@ -6,13 +6,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import ListView
+from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
-from .api import get_movie, search_movies
+from .api import get_movie, lookup_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
 from .forms import MovieCreateEditForm, MovieFindForm
@@ -185,6 +186,72 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
         initial.update({'category_choices': order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial)
+        return render(request, self.template_name, {"form": form})
+
+
+class MovieLookupView(LoginRequiredMixin, DetailView):
+    """Show prospective movies, based on the title and release date provided."""
+    # template_name = "viewmaster/find_results.html"   # TODO CHANGE!!!!
+    model = Movie
+    template_name = "viewmaster/edit_movie.html"
+    form_class = MovieCreateEditForm
+    success_url = reverse_lazy('viewmaster:movie-list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["more"] = "More info..."
+        return context
+        
+    def get(self, request, *args, **kwargs):
+        logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
+        logger.debug("REQUEST %s", dir(request))
+        movie = self.get_object()
+        logger.debug("MOVIE: %s", movie)
+        if movie.movie_id and movie.movie_id != "unknown":
+            return redirect('viewmaster:movie-update', pk=movie.id)
+        # Try to find the movie
+        results = lookup_movie(movie.title, movie.release)
+        success = results.get("Response")
+        if success != "True":
+            return redirect('viewmaster:movie-update', pk=movie.id)
+
+        logger.debug("Found a match!")
+        rating = extract_rating(results.get('Rated', '?'))
+        duration = extract_time(results.get('Runtime', 'Missing runtime'))
+        
+        if movie.rating != rating:
+            logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
+        if movie.duration != duration:
+            logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
+        
+        initial = {
+        #     'id' : movie.id,
+        #     'title': movie.title,
+        #     'release': movie.release,
+        #     'category': movie.category,
+        #     'rating': movie.rating,
+        #     'duration': movie.duration,
+        #     'format': movie.format,
+        #     'aspect': movie.aspect,
+        #     'audio': movie.audio,
+        #     'collection': movie.collection,
+        #     'cost': movie.cost,
+        #     'paid': movie.paid,
+        #     'bad': movie.bad,
+        # }
+        # initial.update(
+        #     {
+        #         'movie_id': results.get("imdbID", "unknown"),
+                'plot': results.get('Plot', ''),
+                'actors': results.get('Actors', ''),
+                'directors': results.get('Director', ''),
+                'cover_ref': results.get('Poster', ''),
+        }
+        # )
+        suggested_genres = results.get('Genre', '')
+        initial.update({'category_choices': order_genre_choices(suggested_genres)})
+        logger.debug("Initial values: %s", initial)
+        form = self.form_class(initial={}, instance=movie)
         return render(request, self.template_name, {"form": form})
 
 
