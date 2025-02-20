@@ -204,36 +204,35 @@ class MovieLookupView(LoginRequiredMixin, UpdateView):
         
     def get(self, request, *args, **kwargs):
         logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
-        logger.debug("REQUEST %s", dir(request))
         movie = self.get_object()
         logger.debug("MOVIE: %s", movie)
-        if movie.movie_id and movie.movie_id != "unknown":
-            return redirect('viewmaster:movie-update', pk=movie.id)
-        # Try to find the movie
-        results = lookup_movie(movie.title, movie.release)
-        success = results.get("Response")
-        if success != "True":
-            return redirect('viewmaster:movie-update', pk=movie.id)
-
-        logger.debug("Found a match!")
-        rating = extract_rating(results.get('Rated', '?'))
-        duration = extract_time(results.get('Runtime', 'Missing runtime'))
-        
-        if movie.rating != rating:
-            logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
-        if movie.duration != duration:
-            logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
-        
-        initial = {
-            'movie_id': results.get("imdbID", "unknown"),
-            'plot': results.get('Plot', ''),
-            'actors': results.get('Actors', ''),
-            'directors': results.get('Director', ''),
-            'cover_ref': results.get('Poster', ''),
-        }
-        suggested_genres = results.get('Genre', '')
-        initial.update({'category_choices': order_genre_choices(suggested_genres)})
-        logger.debug("Initial values: %s", initial)
+        initial = {}
+        if not movie.movie_id or movie.movie_id == "unknown":
+            logging.debug("Movie does not have OMDb info")
+            results = lookup_movie(movie.title, movie.release)
+            success = results.get("Response")
+            if success == "True":
+                logger.debug("Found a match in OMDb!")
+                rating = extract_rating(results.get('Rated', '?'))
+                duration = extract_time(results.get('Runtime', 'Missing runtime'))
+                
+                if movie.rating != rating:
+                    logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
+                if movie.duration != duration:
+                    logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
+                
+                initial.update(
+                    {
+                        'movie_id': results.get("imdbID", "unknown"),
+                        'plot': results.get('Plot', ''),
+                        'actors': results.get('Actors', ''),
+                        'directors': results.get('Director', ''),
+                        'cover_ref': results.get('Poster', ''),
+                    }
+                )
+                suggested_genres = results.get('Genre', '')
+                initial.update({'category_choices': order_genre_choices(suggested_genres)})
+                logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial, instance=movie)
         return render(request, self.template_name, {"form": form, "movie": movie})
 
