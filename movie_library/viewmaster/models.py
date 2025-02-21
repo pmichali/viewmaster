@@ -122,7 +122,8 @@ class Movie(models.Model):
             f"rating={self.rating} duration={self.duration_str} format={self.format} "
             f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
             f"movie_id={self.movie_id} cost=${self.cost:6.2f} "
-            f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'}"
+            f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'} "
+            f"cover_ref={self.cover_ref}"
         )
 
 
