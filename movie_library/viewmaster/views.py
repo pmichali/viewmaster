@@ -11,8 +11,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import ListView
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.generic.detail import DetailView, SingleObjectTemplateResponseMixin
+from django.views.generic.edit import CreateView, DeleteView, UpdateView, ModelFormMixin, ProcessFormView
 
 from .api import get_movie, lookup_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
@@ -158,7 +158,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-class MovieCreateView(LoginRequiredMixin, UpdateView):
+class MovieCreateView(LoginRequiredMixin, CreateView):
     """View for creating a new movie entry."""
     
     model = Movie
@@ -166,13 +166,28 @@ class MovieCreateView(LoginRequiredMixin, UpdateView):
     form_class = MovieCreateEditForm
     success_url = reverse_lazy('viewmaster:movie-list')
 
+    # def post(self, request, *args, **kwargs):
+    #     logger.debug("TEMP: POST CALLED!")
+    #     logger.debug("Object is %s", self.object)
+
+    def get_object(self, queryset=None):
+        try:
+            logger.info("QUERY: %s", queryset)
+            return super(MovieCreateView,self).get_object(queryset)
+        except AttributeError:
+            return None
+
+
+
     def get(self, request, *args, **kwargs):
         logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
         movie_id = kwargs.get("movie_id", "unknown")
         title = request.GET.get('title') or ''
         identifier = int(request.GET.get('pk', 0))
         logger.debug("MovieID: %s, Title: %s, identifier: %d", movie_id, title, identifier)
-
+        logger.info("REQUEST OBJECT: %s", request)
+        self.object = self.get_object(request.GET)
+        logger.debug("OBJECT: %s", self.object)
 
         initial = {}
         suggested_genres = ""
@@ -233,11 +248,105 @@ class MovieCreateView(LoginRequiredMixin, UpdateView):
         return render(request, self.template_name, {"form": form, 'movie': movie})
 
 
+class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixin, ModelFormMixin, ProcessFormView):
+    """View for creating a new movie entry."""
+    
+    model = Movie
+    template_name = "viewmaster/create_update_movie.html"
+    form_class = MovieCreateEditForm
+    success_url = reverse_lazy('viewmaster:movie-list')
+
+    def get_object(self, queryset=None):
+        try:
+            logger.info("QUERY: %s", queryset)
+            return super(MovieCreateUpdateView, self).get_object(queryset)
+        except AttributeError:
+            return None
+
+    def post(self, request, *args, **kwargs):
+        """Create new movie."""
+        logger.debug("POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs)
+        identifier = int(kwargs.get("pk", "0"))
+        if identifier:
+            self.object = Movie.objects.get(pk=identifier)
+        else:
+            self.object = None
+        logger.debug("OBJ %s", self.object)
+        return super(MovieCreateUpdateView, self).post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
+        movie_id = request.GET.get("movie_id") or "unknown"
+        title = request.GET.get('title') or ''
+        identifier = int(kwargs.get('pk', 0))
+        logger.debug("MovieID: %s, Title: %s, identifier: %d", movie_id, title, identifier)
+
+        initial = {}
+        suggested_genres = ""
+        if identifier:  # Edit movie
+            movie = Movie.objects.get(pk=identifier)
+            logger.debug("EXISTING MOVIE: %s", movie)
+            need_movie_info = (movie.movie_id == "" or movie.movie_id == "unknown")
+        else:  # Add movie
+            movie = None
+            need_movie_info = True
+            initial.update(
+                {
+                    'title': title,
+                    'category': '',
+                    'format': '4K',
+                }
+            )
+        self.object = movie
+        if need_movie_info and movie_id != "unknown":
+            logger.debug("Looking up OMDb entry %s", movie_id)
+            results = get_movie(movie_id)
+            success = results.get("Response", "Unknown")
+            if success == "True":
+                rating = extract_rating(results.get('Rated', '?'))
+                duration = extract_time(results.get('Runtime', 'Missing runtime'))
+          
+                if not identifier:  # New movie
+                    initial.update(
+                        {
+                            'title': results.get('Title', ''),
+                            'release': extract_year(results.get('Year','')),
+                            'rating': extract_rating(results.get('Rated', '?')),
+                            'duration': extract_time(results.get('Runtime', 'Missing runtime')),
+                        }
+                    )
+                else:
+                    if movie.rating != rating:
+                        logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
+                    if movie.duration != duration:
+                        logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
+
+                initial.update(
+                    {
+                        'movie_id': results.get("imdbID"),
+                        'plot': results.get('Plot', ''),
+                        'actors': results.get('Actors', ''),
+                        'directors': results.get('Director', ''),
+                        'cover_ref': results.get('Poster', ''),
+                    }
+                )
+                suggested_genres = results.get('Genre', '')
+                initial.update({'category_choices': order_genre_choices(suggested_genres)})
+                logger.debug("Initial values: %s", initial)
+            else:
+                logging.error("Unable to get movie info for %s", movie_id)
+        initial.update({'category_choices': order_genre_choices(suggested_genres)})
+        logger.debug("Initial values: %s", initial)
+        logger.debug("OBJ: %s", self.object)
+        form = self.form_class(initial=initial, instance=movie)
+        return render(request, self.template_name, {"form": form, 'movie': movie})
+
+
 class MovieLookupView(LoginRequiredMixin, UpdateView):
     """Show prospective movies, based on the title and release date provided."""
     # template_name = "viewmaster/find_results.html"   # TODO CHANGE!!!!
     model = Movie
-    template_name = "viewmaster/edit_movie.html"
+    template_name = "viewmaster/create_update_movie.html"
     form_class = MovieCreateEditForm
     success_url = reverse_lazy('viewmaster:movie-list')
     
@@ -259,8 +368,8 @@ class MovieLookupView(LoginRequiredMixin, UpdateView):
 
         logger.debug("Movie already has OMDb info")
         return redirect(
-            reverse('viewmaster:movie-add', kwargs={'movie_id': movie.movie_id}) +
-                     f"?{urlencode({'title': movie.title, 'pk': movie.id})}"
+            reverse('viewmaster:movie-create-update', kwargs={'pk': movie.id}) +
+                     f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id})}"
         )
 
 # REMOVE?

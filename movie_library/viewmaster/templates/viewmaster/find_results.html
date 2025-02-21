@@ -59,7 +59,7 @@ td > a:first-child {
   {% for match in matches %}
     <tr>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}&pk={{ identifier }}" class="row-link">
+        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" class="row-link">
         {% if "http" in match.Poster %}
           <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
         {% else %}
@@ -68,17 +68,17 @@ td > a:first-child {
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}&pk={{ identifier }}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
         {{ match.Year }}
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}&pk={{ identifier }}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
         {{ match.Title }}
         </a>
       </td>
       <td>
-        <a href="{% url 'viewmaster:movie-add' match.imdbID %}?title={{ partial_title|urlencode }}&pk={{ identifier }}" tabindex="-1" class="row-link">
+        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
         {{ match.imdbID }}
         </a>
       </td>
