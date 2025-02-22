@@ -74,7 +74,7 @@ td > a:first-child {
       </td>
       <td>
         <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
-        {{ match.Title }}
+        {{ match.Title | safe }}
         </a>
       </td>
       <td>
