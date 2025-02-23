@@ -140,15 +140,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
             count = results.get("totalResults", "Unknown")
             matches = results.get("Search", [])
             logger.debug("Success: %s, Count: %s, Actual %d", success, count, len(matches))
-            if not matches:
-                matches = [
-                    {
-                        "Title": partial_title,
-                        "Year": "",
-                        "imdbID": "unknown",
-                        "Poster": ""
-                    },
-                ]
         context = {
             'matches': matches,
             'count': len(matches),

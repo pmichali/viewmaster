@@ -47,48 +47,53 @@ td > a:first-child {
 {% endblock %}
 
 {% block content %}
-<h4>Find Results for: '{{ partial_title }}'</h4>	
-<table>
-<tbody>
-  <tr>
-    <th>COVER</th>
-    <th>REL</th>
-    <th>TITLE</th>
-    <th>IMDB ID</th>
-  </tr>
-  {% for match in matches %}
-    <tr>
-      <td>
-        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" class="row-link">
-        {% if "http" in match.Poster %}
-          <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
-        {% else %}
-        N/A
-        {% endif %}
-        </a>
-      </td>
-      <td>
-        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
-        {{ match.Year }}
-        </a>
-      </td>
-      <td>
-        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
-        {{ match.Title | safe }}
-        </a>
-      </td>
-      <td>
-        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
-        {{ match.imdbID }}
-        </a>
-      </td>
-      </a>
-    </tr>
-  {% endfor %}
-</tbody>
-</table>
+<h4>Find IMDB results for: '{{ partial_title }}'</h4>
+{% if not matches %}
+	<p>No matches found in IMDB.</p>
+{% else %}
+	<table>
+	<tbody>
+	  <tr>
+	    <th>COVER</th>
+	    <th>REL</th>
+	    <th>TITLE</th>
+	    <th>IMDB ID</th>
+	  </tr>
+	  {% for match in matches %}
+	    <tr>
+	      <td>
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" class="row-link">
+	        {% if "http" in match.Poster %}
+	          <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
+	        {% else %}
+	        N/A
+	        {% endif %}
+	        </a>
+	      </td>
+	      <td>
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        {{ match.Year }}
+	        </a>
+	      </td>
+	      <td>
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        {{ match.Title | safe }}
+	        </a>
+	      </td>
+	      <td>
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        {{ match.imdbID }}
+	        </a>
+	      </td>
+	      </a>
+	    </tr>
+	  {% endfor %}
+	</tbody>
+	</table>
+{% endif %}
 <p>
-<button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
-<button class="btn btn-info" onclick="window.location.href='{% url 'viewmaster:movie-list' %}'">Cancel</button>
+  <button class="btn btn-primary" onclick="window.location.href='{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id=unknown'">Skip</button>
+  <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
+  <button class="btn btn-info" onclick="window.location.href='{% url 'viewmaster:movie-list' %}'">Cancel</button>
 </p>
 {% endblock %}
