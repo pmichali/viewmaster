@@ -167,12 +167,13 @@
        </tbody>
       </table>
    	  </fieldset>
-   	  <p>{{ form.cover_ref }}</p>
+   	  <p>{{ form.cover_ref }}</p> <!-- this is hidden, but needed -->
       <input id="save" type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
       <button id="cancelBtn" class="btn btn-info">Cancel</button>
   	  {% if movie %}
   	  	<button id="deleteBtn" class="btn btn-danger">Delete</button>
+  	  	<button id="clearBtn" class="btn btn-secondary">Clear IMDB Info</button>
   	  {% endif %}
     </form>
 {% endblock %}
@@ -183,6 +184,10 @@
         // Redirect DELETE to a confirmation page
         document.getElementById("deleteBtn").onclick = function () {
             window.location.href = "{% url 'viewmaster:movie-delete' movie.id %}";
+            return false;  // So that form is not submitted and form URL used
+        }
+        document.getElementById("clearBtn").onclick = function () {
+            window.location.href = "{% url 'viewmaster:movie-clear' movie.id %}";
             return false;  // So that form is not submitted and form URL used
         }
     {% endif %}
