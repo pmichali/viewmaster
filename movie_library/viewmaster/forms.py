@@ -110,7 +110,7 @@ class MovieClearForm(ModelForm):
     class Meta:
         """Model and fields for form."""
         model = Movie
-        fields = '__all__'
+        fields = ['plot', 'actors', 'directors', 'movie_id', 'cover_ref']
 
         widgets = {
             'plot': HiddenInput(),
