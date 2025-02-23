@@ -12,10 +12,10 @@
 <form action="" method="POST">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit" name="clear" class="btn btn-primary">Clear and save movie</button>
+  <button type="submit" name="clear" class="btn btn-primary">Clear</button>
   <button type="submit" name="clear_and_find" class="btn btn-primary">Clear and find IMDB info</button>
-  <button class="btn btn-warning" onclick="javascript:history.back();">Back to movie details</button>
-  <button id="cancelBtn" class="btn btn-info">Cancel add/edit of movie</button>
+  <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
+  <button id="cancelBtn" class="btn btn-info">Cancel</button>
 </form>
 
 {% endblock %}

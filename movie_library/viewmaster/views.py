@@ -166,6 +166,9 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
         else:
             self.object = None
         logger.debug("OBJ %s", self.object)
+        if "save_and_clear" in request.POST:
+            self.success_url = reverse('viewmaster:movie-clear', kwargs={'pk': identifier})
+            logger.debug("Saving and will then clear IMDB info")
         return super(MovieCreateUpdateView, self).post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -278,7 +281,6 @@ class MovieClearView(LoginRequiredMixin, UpdateView):
     """View for confirming the clearing of IMDB info."""
     
     model = Movie
-    # fields = '__all__'
     form_class = MovieClearForm
     template_name = "viewmaster/clear_imdb.html"
     success_url = reverse_lazy('viewmaster:movie-list')
