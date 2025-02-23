@@ -17,7 +17,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView, ModelF
 from .api import get_movie, lookup_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
-from .forms import MovieCreateEditForm, MovieFindForm
+from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm
 from pstats import Stats
 
 
@@ -157,15 +157,8 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
     form_class = MovieCreateEditForm
     success_url = reverse_lazy('viewmaster:movie-list')
 
-    def get_object(self, queryset=None):
-        try:
-            logger.info("QUERY: %s", queryset)
-            return super(MovieCreateUpdateView, self).get_object(queryset)
-        except AttributeError:
-            return None
-
     def post(self, request, *args, **kwargs):
-        """Create new movie."""
+        """Create/update a movie."""
         logger.debug("POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs)
         identifier = int(kwargs.get("pk", "0"))
         if identifier:
@@ -279,3 +272,43 @@ class MovieDeleteView(LoginRequiredMixin, DeleteView):
     
     model = Movie
     success_url = reverse_lazy('viewmaster:movie-list')
+
+
+class MovieClearView(LoginRequiredMixin, UpdateView):
+    """View for confirming the clearing of IMDB info."""
+    
+    model = Movie
+    # fields = '__all__'
+    form_class = MovieClearForm
+    template_name = "viewmaster/clear_imdb.html"
+    success_url = reverse_lazy('viewmaster:movie-list')
+    
+    def post(self, request, *args, **kwargs):
+        """Clear movie's IDMB info."""
+        logger.debug("POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs)
+        if "clear_and_find" in request.POST:
+            identifier = int(kwargs.get("pk", "0"))
+            movie = Movie.objects.get(pk=identifier)         
+            self.success_url = (
+                reverse('viewmaster:movie-find-results') +
+                f"?{urlencode({'title': movie.title, 'identifier': movie.id})}"
+            )
+            logger.debug("Clear and then find using '%s'", self.success_url)
+        else:
+            logger.debug("Clearing")
+        return super(MovieClearView, self).post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
+        identifier = int(kwargs.get("pk", "0"))
+        movie = Movie.objects.get(pk=identifier)
+        logger.debug("Movie to clear %s (%d)", movie, identifier)
+        movie.movie_id = "unknown"
+        movie.plot = ""
+        movie.actors = ""
+        movie.directors = ""
+        movie.cover_ref = ""
+        self.object = movie
+        form = self.form_class(initial={}, instance=movie)
+        return render(request, self.template_name, {'form': form, 'movie': movie})
+
