@@ -23,6 +23,10 @@ body {
 }
 
 /* group headings */
+.group {
+  margin-top: 15px;
+  margin-bottom: 0px;
+}
 .movie-category {
   font-size: large;
   font-weight: bold;
@@ -42,7 +46,16 @@ a {
   color: #5165ff;
 }
 
-/* One movie */
+/* Summary mode styles */
+.header {
+  border: 2px 2px 0px 2px solid #ccd2ff;
+  padding: 2px;
+  margin: 0px;
+  font-weight: bold;
+  background: #77AAE8;
+}
+
+/* Detail mode styles */
 .tableRow {
   text-decoration: none;
   color: inherit;
@@ -153,7 +166,6 @@ a {
     </div>
   </div>
 </div>
-<br />
 </form>
 	{% if movies %}
 	  {% if mode == "alpha" %}
@@ -170,7 +182,7 @@ a {
 	  {% for code, movie_group in ordered_movies %}
 	    <!--  SHOW CATEGORY SECTION -->
 	    <div class="container-fluid">
-          <div class="row">
+          <div class="row group">
             <div class="col-lg movie-category">{{ code }}</div>
               <div class="col-lg go-top">
                 <form class="display: inline-block">
@@ -185,8 +197,20 @@ a {
 	    <!-- SHOW MOVIE LIST -->
 	    
 	    <div class="container-fluid categoryTable">
+	    {% if not show_details %}
+          <div class="row header">
+            <div class="row">
+              <div class="col-lg-6">TITLE</div>
+              <div class="col-lg">RATING</div>
+              <div class="col-lg-3">CATEGORY</div>
+              <div class="col-lg">DATE</div>
+              <div class="col-lg">TIME</div>
+            </div>
+          </div>
+	    {% endif %}
  	    {% for movie in movie_group %}
 		  <a class="row tableRow" href="{% url 'viewmaster:movie-lookup' movie.id %}">
+	      {% if show_details %}
 		    <div class="cover">
 		      <div>
 		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
@@ -213,6 +237,15 @@ a {
 		        <div class="col-lg">{{ movie.format }}</div>
 		      </div>
 		    </div>
+		  {% else %}
+		    <div class="row">
+		      <div class="col-lg-6">{{ movie.title }}</div>
+		      <div class="col-lg">{{ movie.rating }}</div>
+		      <div class="col-lg-3">{{ movie.category }}</div>
+		      <div class="col-lg">{{ movie.release }}</div>
+		      <div class="col-lg">{{ movie.duration_str }}</div>
+		    </div>
+		  {% endif %}
 		  </a>
 	    {% endfor %}
 		</div>    
