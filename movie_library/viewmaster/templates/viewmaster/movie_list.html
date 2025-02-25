@@ -34,7 +34,6 @@ body {
 
 /* one group */
 .categoryTable {
-  /* border: 2px solid #ccd2ff; */
   border-collapse: collapse;
   /* margin: 0px 10px 20px 10px; */
 }
@@ -66,7 +65,16 @@ a {
 }
 
 .cover {
-  padding-left: 0px;
+  width: 81px;
+  height: 122px;
+  display: block;
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.rest {
+  padding-left: 83px;
+  margin-top: -120px;
 }
 
 .plot {
@@ -179,24 +187,24 @@ a {
 	    <div class="container-fluid categoryTable">
  	    {% for movie in movie_group %}
 		  <a class="row tableRow" href="{% url 'viewmaster:movie-lookup' movie.id %}">
-		    <div class="col-lg cover">
+		    <div class="cover">
 		      <div>
 		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
 		      </div>
 		    </div>
-		    <div class="col-lg-11">
+		    <div class="col-lg-12 rest">
 		      <div class="row"> <!-- rest of movie info, left of cover -->
-		        <div class="col-lg-5">{{ movie.title }}</div>
+		        <div class="col-lg-7">{{ movie.title }}</div>
 		        <div class="col-lg">{{ movie.rating }}</div>
 		        <div class="col-lg-2">{{ movie.category }}</div>
 		        <div class="col-lg">{{ movie.release }}</div>
-		        <div class="col-lg-2">{{ movie.duration_str }}</div>
+		        <div class="col-lg">{{ movie.duration_str }}</div>
 		      </div>
 		      <div class="row">  <!-- lines 2-4 for plot -->
-		        <div class="col-lg-11 plot">PLOT: {{ movie.plot|default:"?" }}</div>
+		        <div class="col-lg-12 plot">PLOT: {{ movie.plot|default:"?" }}</div>
 		      </div>
 		      <div class="row">  <!--  line 5 more info -->
-		        <div class="col-lg-4">STARS: {{ movie.actors|default:"?" }}</div>
+		        <div class="col-lg-5">STARS: {{ movie.actors|default:"?" }}</div>
 		        <div class="col-lg-2">DIRS: {{ movie.directors|default:"?" }}</div>
 		        <div class="col-lg">{{ movie.aspect|default:"aspect?" }}</div>
 		        <div class="col-lg">{{ movie.audio|default:"audio?" }}</div>
