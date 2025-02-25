@@ -9,6 +9,8 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* heading */
 #pagehead {
   text-align: center;
   font-size: 1.8em;
@@ -19,36 +21,38 @@ body {
   font-size: 0.6em;
   vertical-align: middle;
 }
+
+/* group headings */
 .movie-category {
   font-size: large;
   font-weight: bold;
 }
-
 .go-top {
   text-align: right;
   font-size: 0.8em;
 }
 
-
+/* one group */
 .categoryTable {
-  border: 2px solid #ccd2ff;
+  /* border: 2px solid #ccd2ff; */
   border-collapse: collapse;
-  margin: 0px 10px 20px 10px;
+  /* margin: 0px 10px 20px 10px; */
 }
 
 a {
   color: #5165ff;
 }
 
+/* One movie */
 .tableRow {
-  /* display: grid; */
   text-decoration: none;
   color: inherit;
-  /* grid-template-columns: repeat(5); */
-  /* place-items: center; */
   border: 2px solid #ccd2ff;
   border-bottom: none;
   cursor: pointer;
+  width: 100%;
+  margin: 0px;
+  padding: 2px;
 
   &:hover,
   &:focus {
@@ -59,6 +63,14 @@ a {
   &:last-child {
     border-bottom: 2px solid #ccd2ff;
   }
+}
+
+.cover {
+  padding-left: 0px;
+}
+
+.plot {
+  height: 72px;  /* reserve three lines for plot */
 }
 
 {% endblock %}
@@ -163,17 +175,40 @@ a {
           </div>
 	    </div>
 	    <!-- SHOW MOVIE LIST -->
+	    
 	    <div class="container-fluid categoryTable">
  	    {% for movie in movie_group %}
 		  <a class="row tableRow" href="{% url 'viewmaster:movie-lookup' movie.id %}">
-		    <div class="col-lg-4 text-truncate">{{ movie.title }}</div>
-		    <div class="col-lg-2">Genre: {{ movie.category }}</div>
-		    <div class="col-lg-2">Date: {{ movie.release }}</div>
-		    <div class="col-lg-2">Rating: {{ movie.rating }}</div>
-		    <div class="col-lg-2">Duration: {{ movie.duration_str }}</div>
+		    <div class="col-lg cover">
+		      <div>
+		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
+		      </div>
+		    </div>
+		    <div class="col-lg-11">
+		      <div class="row"> <!-- rest of movie info, left of cover -->
+		        <div class="col-lg-5">{{ movie.title }}</div>
+		        <div class="col-lg">{{ movie.rating }}</div>
+		        <div class="col-lg-2">{{ movie.category }}</div>
+		        <div class="col-lg">{{ movie.release }}</div>
+		        <div class="col-lg-2">{{ movie.duration_str }}</div>
+		      </div>
+		      <div class="row">  <!-- lines 2-4 for plot -->
+		        <div class="col-lg-11 plot">PLOT: {{ movie.plot|default:"?" }}</div>
+		      </div>
+		      <div class="row">  <!--  line 5 more info -->
+		        <div class="col-lg-4">STARS: {{ movie.actors|default:"?" }}</div>
+		        <div class="col-lg-2">DIRS: {{ movie.directors|default:"?" }}</div>
+		        <div class="col-lg">{{ movie.aspect|default:"aspect?" }}</div>
+		        <div class="col-lg">{{ movie.audio|default:"audio?" }}</div>
+		        <div class="col-lg">COLL: {{ movie.collection }}</div>
+		        <div class="col-lg">${{ movie.cost|default:"0" }}</div>
+		        <div class="col-lg">{{ movie.format }}</div>
+		      </div>
+		    </div>
 		  </a>
 	    {% endfor %}
-		</div>
+		</div>    
+
 	  {% endfor %}
 	{% else %}
 	    <p>No matching movies.</p>
