@@ -179,11 +179,17 @@ a {
 	  {% else %}
 	    {% regroup movies by format_order as ordered_movies %}
 	  {% endif %}
+	  <!--  Show index -->
+	  <div>
+	  {% for code in ordered_movies %}
+	    <a href="#go-{{ code.grouper }}">{{ code.grouper }}</a>&nbsp;&nbsp;
+	  {% endfor %}
+	  </div>
 	  {% for code, movie_group in ordered_movies %}
 	    <!--  SHOW CATEGORY SECTION -->
 	    <div class="container-fluid">
           <div class="row group">
-            <div class="col-lg movie-category">{{ code }}</div>
+            <div id="go-{{ code }}" class="col-lg movie-category">{{ code }}</div>
               <div class="col-lg go-top">
                 <form class="display: inline-block">
                   {% csrf_token %}
