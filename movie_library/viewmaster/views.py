@@ -179,6 +179,7 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
         logger.debug("MovieID: %s, Title: %s, identifier: %d", movie_id, title, identifier)
 
         initial = {}
+        overrides = {}
         suggested_genres = ""
         if identifier:  # Edit movie
             movie = Movie.objects.get(pk=identifier)
@@ -202,22 +203,29 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
             if success == "True":
                 rating = extract_rating(results.get('Rated', '?'))
                 duration = extract_time(results.get('Runtime', 'Missing runtime'))
-          
+                release = extract_year(results.get('Year', ''))
                 if not identifier:  # New movie
                     initial.update(
                         {
                             'title': results.get('Title', ''),
-                            'release': extract_year(results.get('Year','')),
-                            'rating': extract_rating(results.get('Rated', '?')),
-                            'duration': extract_time(results.get('Runtime', 'Missing runtime')),
+                            'release': release,
+                            'rating': rating,
+                            'duration': duration,
                         }
                     )
                 else:
                     if movie.rating != rating:
-                        logging.warning("OMDb has different MPAA rating! %s vs %s", rating, movie.rating)
+                        logging.warning("Overriding existing MPAA rating %s with IMDB value %s", movie.rating, rating)
+                        initial['rating'] = rating
+                        overrides['rating'] = True
                     if movie.duration != duration:
-                        logging.warning("OMDb has different duration! %s vs %s", duration, movie.duration)
-
+                        logging.warning("Overriding existing duration %s with IMDB value %s", movie.duration, duration)
+                        initial['duration'] = duration
+                        overrides['duration'] = True
+                    if movie.release != release:
+                        logging.warning("Overriding existing release date %s with IMDB value %s", movie.release, release)
+                        initial['release'] = release
+                        overrides['release'] = True
                 initial.update(
                     {
                         'movie_id': results.get("imdbID"),
@@ -236,7 +244,7 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
         logger.debug("Initial values: %s", initial)
         logger.debug("OBJ: %s", self.object)
         form = self.form_class(initial=initial, instance=movie)
-        return render(request, self.template_name, {"form": form, 'movie': movie})
+        return render(request, self.template_name, {"form": form, 'movie': movie, 'overrides': overrides})
 
 
 class MovieLookupView(LoginRequiredMixin, UpdateView):
