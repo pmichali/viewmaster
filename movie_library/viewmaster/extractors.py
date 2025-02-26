@@ -21,10 +21,10 @@ def extract_time(time_str):
     total_mins, _, _ = time_str.partition(' ')
     if not total_mins.isdigit():
         logging.warning("Unable to parse time string '%s'", time_str)
-        return "0:00"
+        return "00:00"
     hours = int(total_mins) // 60
     minutes = int(total_mins) % 60
-    return "{}:{:02d}".format(hours, minutes)
+    return "{:02d}:{:02d}".format(hours, minutes)
 
 
 def extract_rating(rating):

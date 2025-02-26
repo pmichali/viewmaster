@@ -66,20 +66,20 @@
       		<th>
       		  <label for="{{ form.release.id_for_label }}">Release</label>
       		</th>
-      		<td>
+      		<td {% if overrides.release %}class="overridden"{% endif %}>
       		  {{ form.release }}
       		  {{ form.release.errors }}
       		</td>
       		<th>
       		  <label for="{{ form.rating.id_for_label }}">Rating</label>
       		</th>
-      		<td>
+      		<td {% if overrides.rating %}class="overridden"{% endif %}>
       		  {{ form.rating }}
       		</td>
       		<th>
       		  <label for="{{ form.duration.id_for_label }}">Duration</label>
       		</th>
-      		<td>
+      		<td {% if overrides.duration %}class="overridden"{% endif %}>
       		  {{ form.duration }}
       		  {{ form.duration.errors }}
       		</td>
