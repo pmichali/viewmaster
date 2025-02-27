@@ -31,7 +31,7 @@ class MovieListView(ListView):
 
     def post(self, request, **kwargs):
         """Show list based on selected ordering mode."""
-        # print(request.POST)
+        logger.debug("POST: %s, KWARGS: %s", request.POST, kwargs)
         mode = request.POST.get("mode")
         if not mode:
             mode = request.POST.get("last_mode", "alpha")
@@ -46,7 +46,7 @@ class MovieListView(ListView):
             .order_by('format')
         )
         movies = Movie.objects
-        if request.POST.get("search.x") and request.POST.get("search.y"):
+        if request.POST.get("phrase") or (request.POST.get("search.x") and request.POST.get("search.y")):
             phrase = request.POST.get("phrase")
             movies = movies.filter(title__icontains=phrase)
         if not show_LD:
