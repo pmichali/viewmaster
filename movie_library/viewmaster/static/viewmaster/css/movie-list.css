@@ -1,0 +1,101 @@
+html {
+  font-size: 14px;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#movie_index a {
+	color: #77AAE8;
+	font-weight: bold;
+}
+
+/* heading */
+#pagehead {
+  text-align: center;
+  font-size: 1.8em;
+  margin-bottom: 4px;
+}
+#vers {
+  display: inline-block;
+  font-size: 0.6em;
+  vertical-align: middle;
+}
+
+/* group headings */
+.group {
+  margin-top: 15px;
+  margin-bottom: 0px;
+}
+.movie-category {
+  font-size: large;
+  font-weight: bold;
+}
+.go-top {
+  text-align: right;
+  font-size: 0.8em;
+}
+
+.go-button {
+  color: #77AAE8;
+  font-weight: bold;
+}
+
+/* one group */
+.categoryTable {
+  border-collapse: collapse;
+  /* margin: 0px 10px 20px 10px; */
+}
+
+a {
+  color: #5165ff;
+}
+
+/* Summary mode styles */
+.header {
+  border: 2px 2px 0px 2px solid #ccd2ff;
+  padding: 2px;
+  margin: 0px;
+  font-weight: bold;
+  background: #77AAE8;
+}
+
+/* Detail mode styles */
+.tableRow {
+  text-decoration: none;
+  color: inherit;
+  border: 2px solid #ccd2ff;
+  border-bottom: none;
+  cursor: pointer;
+  width: 100%;
+  margin: 0px;
+  padding: 2px;
+
+  &:hover,
+  &:focus {
+    background: #f2f3ff;
+    outline: none;
+  }
+
+  &:last-child {
+    border-bottom: 2px solid #ccd2ff;
+  }
+}
+
+.cover {
+  width: 81px;
+  height: 122px;
+  display: block;
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.rest {
+  padding-left: 83px;
+  margin-top: -120px;
+}
+
+.plot {
+  height: 72px;  /* reserve three lines for plot */
+}
