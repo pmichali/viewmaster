@@ -1,7 +1,7 @@
+"""Models for viewmaster app."""
+
 from django.db import models
 from django.urls import reverse
-
-from django.db.models.signals import pre_save
 
 from auditlog.registry import auditlog
 
@@ -109,7 +109,7 @@ class Movie(models.Model):
     @property
     def alpha_order(self):
         """Code indicating the alphabetical order."""
-        first = self.title[0].upper()
+        first = self.title[0].upper()  # pylint: disable=unsubscriptable-object
         if first in "0123456789":
             return "#"
         return first

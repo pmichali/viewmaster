@@ -1,9 +1,10 @@
+"""URL definitions for viewmaster sections."""
 from django.urls import path
 
 from .views import MovieClearView, MovieCreateUpdateView, MovieDeleteView, MovieFindView
 from .views import MovieFindResultsView, MovieListView, MovieLookupView
 
-app_name = "viewmaster"
+app_name = "viewmaster"  # pylint: disable=invalid-name
 urlpatterns = [
     path("", MovieListView.as_view(), name="movie-list"),
     path("find/", MovieFindView.as_view(), name="movie-find"),

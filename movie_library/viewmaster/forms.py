@@ -1,9 +1,10 @@
+"""Form definitions for viewmaster."""
 import logging
 
 from datetime import datetime
 
 from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, ModelForm
-from django.forms import Textarea, NumberInput, Select, TextInput, TimeInput
+from django.forms import Textarea, NumberInput, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
 from .models import Movie
@@ -19,7 +20,7 @@ class MovieFindForm(Form):
 
     def __init__(self, *args, **kwargs):
         """Enabling tool tips for the form."""
-        super(MovieFindForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["partial_title"].widget.attrs.update(
             {
                 "data-bs-toggle": "tooltip",
@@ -34,7 +35,7 @@ class MovieFindForm(Form):
 class MovieCreateEditForm(ModelForm):
     """Model based form for creating a movie."""
 
-    class Meta:
+    class Meta:  # pylint: disable=too-few-public-methods
         """Model, fields, and custom widgets for form."""
 
         model = Movie
@@ -75,7 +76,7 @@ class MovieCreateEditForm(ModelForm):
     def __init__(self, *args, **kwargs):
         """Enabling tool tips for the form."""
         logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
-        super(MovieCreateEditForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if kwargs.get("initial") and kwargs["initial"].get("category_choices"):
             # Create new form field to be able to set the choices. If try to just change
@@ -104,7 +105,7 @@ class MovieCreateEditForm(ModelForm):
         try:
             release_year = int(release)
         except ValueError as e:
-            raise ValidationError("must be a four-digit date")
+            raise ValidationError("must be a four-digit date") from e
         this_year = datetime.today().year
         if release_year < 1900:
             raise ValidationError("date must be greater than 1900")
@@ -123,7 +124,7 @@ class MovieCreateEditForm(ModelForm):
 class MovieClearForm(ModelForm):
     """Model based form for clearing movie IMDB info."""
 
-    class Meta:
+    class Meta:  # pylint: disable=too-few-public-methods
         """Model and fields for form."""
 
         model = Movie

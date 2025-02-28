@@ -24,7 +24,7 @@ def extract_time(time_str):
         return "00:00"
     hours = int(total_mins) // 60
     minutes = int(total_mins) % 60
-    return "{:02d}:{:02d}".format(hours, minutes)
+    return f"{hours:02d}:{minutes:02d}"
 
 
 def extract_rating(rating):

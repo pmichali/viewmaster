@@ -5,26 +5,23 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
 from django.db.models.functions import Lower
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect, render, reverse
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import ListView
-from django.views.generic.detail import DetailView, SingleObjectTemplateResponseMixin
+from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.views.generic.edit import (
-    CreateView,
     DeleteView,
     UpdateView,
     ModelFormMixin,
     ProcessFormView,
 )
 
-from .api import get_movie, lookup_movie, search_movies
+from .api import get_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
 from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm
-from pstats import Stats
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +43,8 @@ class MovieListView(ListView):
 
         mode = request.POST.get("mode", request.session.get("mode", "alpha"))
         request.session["mode"] = mode
-        showLD = request.POST.get("showLD", "")
-        request.session["showLD"] = showLD
+        show_ld = request.POST.get("show_ld", "")
+        request.session["show_ld"] = show_ld
         show_details = request.POST.get("show_details", "")
         request.session["show_details"] = show_details
 
@@ -65,7 +62,7 @@ class MovieListView(ListView):
         ):
             phrase = request.POST.get("phrase")
             movies = movies.filter(title__icontains=phrase)
-        if not showLD:
+        if not show_ld:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
             movies = movies.order_by(Lower("title"))
@@ -87,7 +84,7 @@ class MovieListView(ListView):
         context = {
             "movies": movies,
             "mode": mode,
-            "showLD": showLD,
+            "show_ld": show_ld,
             "show_details": show_details,
             "total": total_movies,
             "total_paid": total_paid,
@@ -95,17 +92,18 @@ class MovieListView(ListView):
         }
         return render(request, "viewmaster/movie_list.html", context)
 
-    def get(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         """Initial view is alphabetical."""
         logger.debug(
-            "List GET: REQUEST %s, KWARGS %s, SESSION: %s",
+            "List GET: REQUEST %s, ARGS %s KWARGS %s, SESSION: %s",
             dict(request.GET),
+            args,
             kwargs,
             dict(request.session),
         )
 
         mode = request.session.setdefault("mode", "alpha")
-        showLD = request.session.setdefault("showLD", "")
+        show_ld = request.session.setdefault("show_ld", "")
         show_details = request.session.setdefault("show_details", "")
 
         total_movies = Movie.objects.count()
@@ -118,7 +116,7 @@ class MovieListView(ListView):
         )
 
         movies = Movie.objects
-        if not showLD:
+        if not show_ld:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
             movies = movies.order_by(Lower("title"))
@@ -139,7 +137,7 @@ class MovieListView(ListView):
         context = {
             "movies": movies,
             "mode": mode,
-            "showLD": showLD,
+            "show_ld": show_ld,
             "show_details": show_details,
             "total": total_movies,
             "total_paid": total_paid,
@@ -157,6 +155,7 @@ class MovieFindView(LoginRequiredMixin, View):
     initial = {"partial_title": ""}
 
     def get(self, request, *args, **kwargs):
+        """Handle request to find movies."""
         logger.debug(
             "Find GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
@@ -190,7 +189,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
             "looking for candidates for '%s' (%d)", partial_title, existing_id
         )
         mode = request.GET.get("mode", "")
-        candidates = []
         if partial_title:
             results = search_movies(partial_title)
             success = results.get("Response", "Missing")
@@ -214,7 +212,7 @@ class MovieCreateUpdateView(
     SingleObjectTemplateResponseMixin,
     ModelFormMixin,
     ProcessFormView,
-):
+):  # pylint: disable=too-many-ancestors
     """View for creating a new movie entry."""
 
     model = Movie
@@ -233,10 +231,9 @@ class MovieCreateUpdateView(
         )
         identifier = int(kwargs.get("pk", "0"))
         if identifier:
-            self.object = Movie.objects.get(pk=identifier)
+            self.object = Movie.objects.get(pk=identifier)  # pylint: disable=attribute-defined-outside-init
         else:
-            self.object = None
-        mode = request.GET.get("mode", "")
+            self.object = None  # pylint: disable=attribute-defined-outside-init
         logger.debug("OBJ %s", self.object)
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
@@ -255,9 +252,10 @@ class MovieCreateUpdateView(
             )
             request.POST = post_copy
         self.success_url = reverse("viewmaster:movie-list")
-        return super(MovieCreateUpdateView, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        """Show form to create/update movie."""
         logger.debug(
             "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
@@ -279,7 +277,7 @@ class MovieCreateUpdateView(
         if identifier:  # Edit movie
             movie = Movie.objects.get(pk=identifier)
             logger.debug("EXISTING MOVIE: %s", movie)
-            need_movie_info = movie.movie_id == "" or movie.movie_id == "unknown"
+            need_movie_info = movie.movie_id in ("", "unknown")
         else:  # Add movie
             movie = None
             need_movie_info = True
@@ -290,7 +288,7 @@ class MovieCreateUpdateView(
                     "format": "4K",
                 }
             )
-        self.object = movie
+        self.object = movie  # pylint: disable=attribute-defined-outside-init
         if need_movie_info and movie_id != "unknown":
             logger.debug("Looking up OMDb entry %s", movie_id)
             results = get_movie(movie_id)
@@ -361,28 +359,22 @@ class MovieCreateUpdateView(
         )
 
 
-class MovieLookupView(LoginRequiredMixin, UpdateView):
+class MovieLookupView(LoginRequiredMixin, UpdateView):  # pylint: disable=too-many-ancestors
     """Show prospective movies, based on the title and release date provided."""
 
-    # template_name = "viewmaster/find_results.html"   # TODO CHANGE!!!!
     model = Movie
     template_name = "viewmaster/create_update_movie.html"
     form_class = MovieCreateEditForm
     success_url = reverse_lazy("viewmaster:movie-list")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["more"] = "More info..."
-        return context
-
     def get(self, request, *args, **kwargs):
+        """Handle editing of movie and either lookup IMDB info or go to editing."""
         logger.debug(
             "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
         movie = self.get_object()
         mode = request.GET.get("mode", "")
         logger.debug("MOVIE: %s, MODE: %s", movie, mode)
-        initial = {}
         if not movie.movie_id or movie.movie_id == "unknown":
             logging.debug("Movie does not have OMDb info")
 
@@ -398,7 +390,7 @@ class MovieLookupView(LoginRequiredMixin, UpdateView):
         )
 
 
-class MovieDeleteView(LoginRequiredMixin, DeleteView):
+class MovieDeleteView(LoginRequiredMixin, DeleteView):   # pylint: disable=too-many-ancestors
     """View for confirming the deletion of a movie entry."""
 
     model = Movie
@@ -427,12 +419,11 @@ class MovieDeleteView(LoginRequiredMixin, DeleteView):
             args,
             kwargs,
         )
-        mode = request.POST.get("mode", "")
         self.success_url = reverse("viewmaster:movie-list")
-        return super(MovieDeleteView, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 
-class MovieClearView(LoginRequiredMixin, UpdateView):
+class MovieClearView(LoginRequiredMixin, UpdateView):  # pylint: disable=too-many-ancestors
     """View for confirming the clearing of IMDB info."""
 
     model = Movie
@@ -455,9 +446,10 @@ class MovieClearView(LoginRequiredMixin, UpdateView):
             logger.debug("Clear and then find using '%s'", self.success_url)
         else:
             logger.debug("Clearing")
-        return super(MovieClearView, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        """Show confirmation form to clear IMDB info."""
         logger.debug(
             "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
@@ -469,6 +461,6 @@ class MovieClearView(LoginRequiredMixin, UpdateView):
         movie.actors = ""
         movie.directors = ""
         movie.cover_ref = ""
-        self.object = movie
+        self.object = movie  # pylint: disable=attribute-defined-outside-init
         form = self.form_class(initial={}, instance=movie)
         return render(request, self.template_name, {"form": form, "movie": movie})

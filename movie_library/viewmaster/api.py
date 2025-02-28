@@ -3,7 +3,6 @@
 import logging
 
 import urllib
-import urllib3
 
 import requests
 import simplejson
@@ -21,7 +20,7 @@ class RequestFailed(APIFailure):
     """Indicates a failure to perform request to OMDb."""
 
 
-class RESTClient:
+class RESTClient:  # pylint: disable=too-few-public-methods
     """Communicate with OMDb for movie info."""
 
     def __init__(self, server_base_url: str, handler=requests) -> None:
