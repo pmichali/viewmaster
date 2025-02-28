@@ -34,7 +34,9 @@ class MovieListView(ListView):
         logger.debug("List POST: %s, KWARGS: %s, SESSION: %s", request.POST, kwargs, dict(request.session))
         mode = request.POST.get("mode", request.session.get('mode', 'alpha'))
         request.session['mode'] = mode
-        show_LD = True if request.POST.get("showLD") else False
+        # show_LD = True if request.POST.get("showLD") else False
+        showLD = request.POST.get('showLD', '')
+        request.session['showLD'] = showLD
         show_details = True if request.POST.get("show-details") else False
         total_movies = Movie.objects.count()
         total_paid = Movie.objects.filter(paid=True).count()
@@ -48,7 +50,7 @@ class MovieListView(ListView):
         if request.POST.get("phrase") or (request.POST.get("search.x") and request.POST.get("search.y")):
             phrase = request.POST.get("phrase")
             movies = movies.filter(title__icontains=phrase)
-        if not show_LD:
+        if not showLD:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
             movies = movies.order_by(Lower('title'))
@@ -66,7 +68,7 @@ class MovieListView(ListView):
         context = {
             'movies': movies,
             'mode': mode,
-            'show_LD': show_LD,
+            'showLD': showLD,
             'show_details': show_details,
             'total': total_movies,
             'total_paid': total_paid,
@@ -78,6 +80,8 @@ class MovieListView(ListView):
         """Initial view is alphabetical."""
         logger.debug("List GET: REQUEST %s, KWARGS %s, SESSION: %s", dict(request.GET), kwargs, dict(request.session))
         mode = request.session.setdefault('mode', 'alpha')
+        showLD = request.session.setdefault('showLD', '')
+        
         total_movies = Movie.objects.count()
         total_paid = Movie.objects.filter(paid=True).count()
         stats = (
@@ -87,7 +91,9 @@ class MovieListView(ListView):
             .order_by('format')
         )
 
-        movies = Movie.objects.exclude(format="LD")
+        movies = Movie.objects
+        if not showLD:
+            movies = movies.exclude(format="LD")
         if mode == "alpha":
             movies = movies.order_by(Lower('title'))
         elif mode == "cat_alpha":
@@ -103,7 +109,7 @@ class MovieListView(ListView):
         context = {
             'movies': movies,
             'mode': mode,
-            'show_LD': False,
+            'showLD': showLD,
             'show_details': False,
             'total': total_movies,
             'total_paid': total_paid,

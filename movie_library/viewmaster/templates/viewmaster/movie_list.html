@@ -135,7 +135,7 @@ a {
 	<div class="col-auto mb-2 mt-2">
 	  <div class="form-check">
 	    <input class="form-check-input" type="checkbox" id="LD"
-	           name="showLD" value="show" {% if show_LD %}checked{% endif %} >
+	           name="showLD" value="show" {% if showLD %}checked{% endif %} >
 	    <label class="form-check-label" for="LD"> Show LDs</label>
 	  </div>
 	</div>
@@ -203,11 +203,12 @@ a {
 	    {% if not show_details %}
           <div class="row header">
             <div class="row">
-              <div class="col-lg-6">TITLE</div>
+              <div class="col-lg-5">TITLE</div>
               <div class="col-lg">RATING</div>
               <div class="col-lg-3">CATEGORY</div>
               <div class="col-lg">DATE</div>
               <div class="col-lg">TIME</div>
+              <div class="col-lg">FORMAT</div>
             </div>
           </div>
 	    {% endif %}
@@ -242,11 +243,12 @@ a {
 		    </div>
 		  {% else %}
 		    <div class="row">
-		      <div class="col-lg-6">{{ movie.title }}</div>
+		      <div class="col-lg-5">{{ movie.title }}</div>
 		      <div class="col-lg">{{ movie.rating }}</div>
 		      <div class="col-lg-3">{{ movie.category }}</div>
 		      <div class="col-lg">{{ movie.release }}</div>
 		      <div class="col-lg">{{ movie.duration_str }}</div>
+		      <div class="col-lg">{{ movie.format }}</div>
 		    </div>
 		  {% endif %}
 		  </a>
