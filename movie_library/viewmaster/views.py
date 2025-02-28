@@ -218,8 +218,9 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
                         logging.warning("Overriding existing MPAA rating %s with IMDB value %s", movie.rating, rating)
                         initial['rating'] = rating
                         overrides['rating'] = True
-                    if movie.duration != duration:
-                        logging.warning("Overriding existing duration %s with IMDB value %s", movie.duration, duration)
+                    stored_duration = movie.duration.strftime("%H:%M")
+                    if stored_duration != duration:
+                        logging.warning("Overriding existing duration '%s' with IMDB value '%s'", stored_duration, duration)
                         initial['duration'] = duration
                         overrides['duration'] = True
                     if movie.release != release:
