@@ -31,10 +31,9 @@ class MovieListView(ListView):
 
     def post(self, request, **kwargs):
         """Show list based on selected ordering mode."""
-        logger.debug("POST: %s, KWARGS: %s", request.POST, kwargs)
-        mode = request.POST.get("mode")
-        if not mode:
-            mode = request.POST.get("last_mode", "alpha")
+        logger.debug("List POST: %s, KWARGS: %s, SESSION: %s", request.POST, kwargs, dict(request.session))
+        mode = request.POST.get("mode", request.session.get('mode', 'alpha'))
+        request.session['mode'] = mode
         show_LD = True if request.POST.get("showLD") else False
         show_details = True if request.POST.get("show-details") else False
         total_movies = Movie.objects.count()
@@ -63,6 +62,7 @@ class MovieListView(ListView):
             movies = movies.exclude(collection__isnull=True).exclude(collection__exact='').order_by(Lower('collection'), 'release')
         else:  # disk format
             movies = movies.order_by(Lower('format'), Lower('title'))
+        logger.debug("Have %d movies with mode %s", total_movies, mode)
         context = {
             'movies': movies,
             'mode': mode,
@@ -76,6 +76,8 @@ class MovieListView(ListView):
 
     def get(self, request, **kwargs):
         """Initial view is alphabetical."""
+        logger.debug("List GET: REQUEST %s, KWARGS %s, SESSION: %s", dict(request.GET), kwargs, dict(request.session))
+        mode = request.session.setdefault('mode', 'alpha')
         total_movies = Movie.objects.count()
         total_paid = Movie.objects.filter(paid=True).count()
         stats = (
@@ -85,16 +87,29 @@ class MovieListView(ListView):
             .order_by('format')
         )
 
-        movies = Movie.objects.exclude(format="LD").order_by(Lower('title'))
+        movies = Movie.objects.exclude(format="LD")
+        if mode == "alpha":
+            movies = movies.order_by(Lower('title'))
+        elif mode == "cat_alpha":
+            movies = movies.order_by(Lower('category'), Lower('title'))
+        elif mode == "cat_date_alpha":
+            movies =  movies.order_by(Lower('category'), '-release', Lower('title'))
+        elif mode == "date":
+            movies = movies.order_by('-release', 'title')
+        elif mode == "collection":
+            movies = movies.exclude(collection__isnull=True).exclude(collection__exact='').order_by(Lower('collection'), 'release')
+        else:  # disk format
+            movies = movies.order_by(Lower('format'), Lower('title'))
         context = {
             'movies': movies,
-            'mode': "alpha",
+            'mode': mode,
             'show_LD': False,
             'show_details': False,
             'total': total_movies,
             'total_paid': total_paid,
             'stats': stats,
         }
+        logger.debug("Have %d movies with mode %s", total_movies, mode)
         return render(request, 'viewmaster/movie_list.html', context)
 
 
@@ -104,11 +119,12 @@ class MovieFindView(LoginRequiredMixin, View):
     template_name = "viewmaster/find_movie.html"
     form_class = MovieFindForm
     initial = {"partial_title": ""}
-    success_url = reverse_lazy('viewmaster:movie-find-results')
 
     def get(self, request, *args, **kwargs):
+        logger.debug("Find GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
+        mode = request.GET.get('mode', '')
         form = self.form_class(initial=self.initial)
-        return render(request, self.template_name, {"form": form})
+        return render(request, self.template_name, {"form": form, "mode": mode})
 
 
 class MovieFindResultsView(LoginRequiredMixin, View):
@@ -133,6 +149,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
         logging.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
+        mode = request.GET.get('mode', '')
         candidates = []
         if partial_title:
             results = search_movies(partial_title)
@@ -145,6 +162,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
             'count': len(matches),
             'partial_title': partial_title or "",
             'identifier': existing_id,
+            'mode': mode,
         }
         return render(request, self.template_name, context)
 
@@ -159,24 +177,38 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
 
     def post(self, request, *args, **kwargs):
         """Create/update a movie."""
-        logger.debug("POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs)
+        logger.debug("Create/Update POST: REQUEST %s, ARGS %s, KWARGS %s, SESSIION %s", dict(request.POST), args, kwargs, dict(request.session))
         identifier = int(kwargs.get("pk", "0"))
         if identifier:
             self.object = Movie.objects.get(pk=identifier)
         else:
             self.object = None
+        mode = request.GET.get('mode', '')
         logger.debug("OBJ %s", self.object)
         if "save_and_clear" in request.POST:
             self.success_url = reverse('viewmaster:movie-clear', kwargs={'pk': identifier})
             logger.debug("Saving and will then clear IMDB info")
+            post_copy = request.POST.copy()
+            post_copy.update(
+                {
+                    'plot': '',
+                    'actors': '',
+                    'directors': '',
+                    'movie_id': '',
+                    'cover_ref': '',
+                 }
+            )
+            request.POST = post_copy
+        self.success_url = reverse('viewmaster:movie-list')
         return super(MovieCreateUpdateView, self).post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
         movie_id = request.GET.get("movie_id") or "unknown"
         title = request.GET.get('title') or ''
+        mode = request.GET.get('mode', '')
         identifier = int(kwargs.get('pk', 0))
-        logger.debug("MovieID: %s, Title: %s, identifier: %d", movie_id, title, identifier)
+        logger.debug("MovieID: %s, Title: %s, identifier: %d mode: %s", movie_id, title, identifier, mode)
 
         initial = {}
         overrides = {}
@@ -245,7 +277,7 @@ class MovieCreateUpdateView(LoginRequiredMixin, SingleObjectTemplateResponseMixi
         logger.debug("Initial values: %s", initial)
         logger.debug("OBJ: %s", self.object)
         form = self.form_class(initial=initial, instance=movie)
-        return render(request, self.template_name, {"form": form, 'movie': movie, 'overrides': overrides})
+        return render(request, self.template_name, {"form": form, 'movie': movie, 'overrides': overrides, 'mode': mode})
 
 
 class MovieLookupView(LoginRequiredMixin, UpdateView):
@@ -262,20 +294,21 @@ class MovieLookupView(LoginRequiredMixin, UpdateView):
         return context
         
     def get(self, request, *args, **kwargs):
-        logger.debug("GET: ARGS %s, KWARGS %s", args, kwargs)
+        logger.debug("GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
         movie = self.get_object()
-        logger.debug("MOVIE: %s", movie)
+        mode = request.GET.get('mode', '')
+        logger.debug("MOVIE: %s, MODE: %s", movie, mode)
         initial = {}
         if not movie.movie_id or movie.movie_id == "unknown":
             logging.debug("Movie does not have OMDb info")
 
             return redirect(reverse('viewmaster:movie-find-results') +
-                            f"?{urlencode({'title': movie.title, 'identifier': movie.id})}")
+                            f"?{urlencode({'title': movie.title, 'identifier': movie.id, 'mode': mode})}")
 
         logger.debug("Movie already has OMDb info")
         return redirect(
             reverse('viewmaster:movie-create-update', kwargs={'pk': movie.id}) +
-                     f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id})}"
+                     f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id, 'mode': mode})}"
         )
 
 
@@ -283,7 +316,24 @@ class MovieDeleteView(LoginRequiredMixin, DeleteView):
     """View for confirming the deletion of a movie entry."""
     
     model = Movie
-    success_url = reverse_lazy('viewmaster:movie-list')
+    template_name = "viewmaster/movie_confirm_delete.html"
+    # success_url = reverse_lazy('viewmaster:movie-list')
+
+    def get(self, request, *args, **kwargs):
+        """Form for delete confirmation."""
+        logger.debug("Delete GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs)
+        identifier = int(kwargs.get("pk", "0"))
+        movie = Movie.objects.get(pk=identifier)
+        mode = request.GET.get('mode', '')
+        logger.debug("Movie to delete %s (%d), mode: %s", movie, identifier, mode)
+        return render(request, self.template_name, {'movie': movie, 'mode': mode})
+
+    def post(self, request, *args, **kwargs):
+        """Delete the movie"""
+        logger.debug("Delete POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs)
+        mode = request.POST.get('mode', '')
+        self.success_url = reverse('viewmaster:movie-list')
+        return super(MovieDeleteView, self).post(request, *args, **kwargs)
 
 
 class MovieClearView(LoginRequiredMixin, UpdateView):
