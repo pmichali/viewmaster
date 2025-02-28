@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewmaster', '0005_alter_movie_cost'),
+        ("viewmaster", "0005_alter_movie_cost"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='movie',
-            name='movie_id',
-            field=models.CharField(blank=True, default='unknown', help_text='IMDB movie ID (imported)'),
+            model_name="movie",
+            name="movie_id",
+            field=models.CharField(
+                blank=True, default="unknown", help_text="IMDB movie ID (imported)"
+            ),
         ),
     ]

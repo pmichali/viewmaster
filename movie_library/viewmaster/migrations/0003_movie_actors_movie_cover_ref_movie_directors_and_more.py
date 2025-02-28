@@ -6,38 +6,76 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewmaster', '0002_alter_movie_category'),
+        ("viewmaster", "0002_alter_movie_category"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='movie',
-            name='actors',
-            field=models.CharField(blank=True, default='', help_text='Top cast (imported)'),
+            model_name="movie",
+            name="actors",
+            field=models.CharField(
+                blank=True, default="", help_text="Top cast (imported)"
+            ),
         ),
         migrations.AddField(
-            model_name='movie',
-            name='cover_ref',
-            field=models.URLField(blank=True, default='', help_text='URL where poster image is located (imported)'),
+            model_name="movie",
+            name="cover_ref",
+            field=models.URLField(
+                blank=True,
+                default="",
+                help_text="URL where poster image is located (imported)",
+            ),
         ),
         migrations.AddField(
-            model_name='movie',
-            name='directors',
-            field=models.CharField(blank=True, default='', help_text='Director(s) (imported)'),
+            model_name="movie",
+            name="directors",
+            field=models.CharField(
+                blank=True, default="", help_text="Director(s) (imported)"
+            ),
         ),
         migrations.AddField(
-            model_name='movie',
-            name='movie_id',
-            field=models.CharField(blank=True, default='', help_text='IMDB movie ID (imported)'),
+            model_name="movie",
+            name="movie_id",
+            field=models.CharField(
+                blank=True, default="", help_text="IMDB movie ID (imported)"
+            ),
         ),
         migrations.AddField(
-            model_name='movie',
-            name='plot',
-            field=models.CharField(blank=True, default='', help_text='Plot summary (imported)'),
+            model_name="movie",
+            name="plot",
+            field=models.CharField(
+                blank=True, default="", help_text="Plot summary (imported)"
+            ),
         ),
         migrations.AlterField(
-            model_name='movie',
-            name='category',
-            field=models.CharField(choices=[('ACTION', 'action'), ('ADVENTURE', 'adventure'), ('ANIMATED', 'animated'), ('CHILDRENS', 'childrens'), ('COMEDY', 'comedy'), ('CRiME', 'crime'), ('DOCUMENTARY', 'documentary'), ('DRAMA', 'drama'), ('FAMILY', 'family'), ('FANTASY', 'fantasy'), ('HISTORY', 'history'), ('HORROR', 'horror'), ('MILITARY', 'military'), ('MISC', 'misc'), ('MUSICAL', 'musical'), ('MYSTERY', 'mystery'), ('ROMANCE', 'romance'), ('SCI-FI', 'sci-fi'), ('SUSPENSE', 'suspense'), ('THRILLER', 'thriller'), ('UNKNOWN', 'unknown'), ('WESTERN', 'western')], max_length=20),
+            model_name="movie",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("ACTION", "action"),
+                    ("ADVENTURE", "adventure"),
+                    ("ANIMATED", "animated"),
+                    ("CHILDRENS", "childrens"),
+                    ("COMEDY", "comedy"),
+                    ("CRiME", "crime"),
+                    ("DOCUMENTARY", "documentary"),
+                    ("DRAMA", "drama"),
+                    ("FAMILY", "family"),
+                    ("FANTASY", "fantasy"),
+                    ("HISTORY", "history"),
+                    ("HORROR", "horror"),
+                    ("MILITARY", "military"),
+                    ("MISC", "misc"),
+                    ("MUSICAL", "musical"),
+                    ("MYSTERY", "mystery"),
+                    ("ROMANCE", "romance"),
+                    ("SCI-FI", "sci-fi"),
+                    ("SUSPENSE", "suspense"),
+                    ("THRILLER", "thriller"),
+                    ("UNKNOWN", "unknown"),
+                    ("WESTERN", "western"),
+                ],
+                max_length=20,
+            ),
         ),
     ]

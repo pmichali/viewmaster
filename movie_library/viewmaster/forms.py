@@ -20,13 +20,13 @@ class MovieFindForm(Form):
     def __init__(self, *args, **kwargs):
         """Enabling tool tips for the form."""
         super(MovieFindForm, self).__init__(*args, **kwargs)
-        self.fields['partial_title'].widget.attrs.update(
+        self.fields["partial_title"].widget.attrs.update(
             {
-                'data-bs-toggle':'tooltip',
-                'title': 'Enter partial movie title. Use "*" for wildcard',
-                'data-bs-placement':'right',
-                'placeholder': 'Title to find...',
-                'autofocus': True,
+                "data-bs-toggle": "tooltip",
+                "title": 'Enter partial movie title. Use "*" for wildcard',
+                "data-bs-placement": "right",
+                "placeholder": "Title to find...",
+                "autofocus": True,
             }
         )
 
@@ -36,26 +36,40 @@ class MovieCreateEditForm(ModelForm):
 
     class Meta:
         """Model, fields, and custom widgets for form."""
+
         model = Movie
-        fields = ['title', 'plot', 'actors', 'directors', 
-                  'release', 'rating', 'category',
-                  'format', 'duration', 'aspect', 'audio',
-                  'collection', 'cost', 'paid', 'bad',
-                  'movie_id', 'cover_ref',
-                  ]
+        fields = [
+            "title",
+            "plot",
+            "actors",
+            "directors",
+            "release",
+            "rating",
+            "category",
+            "format",
+            "duration",
+            "aspect",
+            "audio",
+            "collection",
+            "cost",
+            "paid",
+            "bad",
+            "movie_id",
+            "cover_ref",
+        ]
         widgets = {
-            'title' : TextInput(attrs={'size': 60, 'autofocus': True}),
-            'plot': Textarea(attrs={'cols': 60, 'rows': 3, 'tabindex': -1}),
-            'actors' : TextInput(attrs={'size': 60, 'tabindex': -1}),
-            'directors' : TextInput(attrs={'size': 60, 'tabindex': -1}),
-            'release' : DateInput(format='%Y', attrs={'size': 6}),
-            'duration' : TimeInput(format='%H:%M', attrs={'size': 6}),
-            'aspect': TextInput(attrs={'size': 10}),
-            'audio': TextInput(attrs={'size': 10}),
-            'collection': TextInput(attrs={'size': 10}),
-            'cost': NumberInput(attrs={'size': 6}),
-            'movie_id': TextInput(attrs={'size':12, 'tabindex': -1}),
-            'cover_ref': HiddenInput(),
+            "title": TextInput(attrs={"size": 60, "autofocus": True}),
+            "plot": Textarea(attrs={"cols": 60, "rows": 3, "tabindex": -1}),
+            "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
+            "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
+            "release": DateInput(format="%Y", attrs={"size": 6}),
+            "duration": TimeInput(format="%H:%M", attrs={"size": 6}),
+            "aspect": TextInput(attrs={"size": 10}),
+            "audio": TextInput(attrs={"size": 10}),
+            "collection": TextInput(attrs={"size": 10}),
+            "cost": NumberInput(attrs={"size": 6}),
+            "movie_id": TextInput(attrs={"size": 12, "tabindex": -1}),
+            "cover_ref": HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -63,28 +77,30 @@ class MovieCreateEditForm(ModelForm):
         logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
         super(MovieCreateEditForm, self).__init__(*args, **kwargs)
 
-        if kwargs.get('initial') and kwargs['initial'].get('category_choices'):
+        if kwargs.get("initial") and kwargs["initial"].get("category_choices"):
             # Create new form field to be able to set the choices. If try to just change
             # the choices attribute, it will be ignored, as there is one already.
-            new_choices = kwargs['initial']['category_choices']
-            self.fields['category'] = ChoiceField(choices=new_choices, help_text="Select a genre")
+            new_choices = kwargs["initial"]["category_choices"]
+            self.fields["category"] = ChoiceField(
+                choices=new_choices, help_text="Select a genre"
+            )
             logger.debug("Overriding choices")
         # Set help text...
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
-            if help_text != '':
+            if help_text != "":
                 self.fields[field].widget.attrs.update(
                     {
-                        'data-bs-toggle':'tooltip',
-                        'title':help_text,
-                        'data-bs-placement':'right',
+                        "data-bs-toggle": "tooltip",
+                        "title": help_text,
+                        "data-bs-placement": "right",
                     }
                 )
 
     def clean_release(self):
         """Ensure a four-digit year is entered, that is not in the future."""
-        release = self.cleaned_data['release']
+        release = self.cleaned_data["release"]
         try:
             release_year = int(release)
         except ValueError as e:
@@ -98,7 +114,7 @@ class MovieCreateEditForm(ModelForm):
 
     def clean_cost(self):
         """Ensure cost is a non-negative amount."""
-        cost = self.cleaned_data['cost']
+        cost = self.cleaned_data["cost"]
         if cost < 0:
             raise ValidationError("Cost must be a positive amount")
         return cost
@@ -109,13 +125,14 @@ class MovieClearForm(ModelForm):
 
     class Meta:
         """Model and fields for form."""
+
         model = Movie
-        fields = ['plot', 'actors', 'directors', 'movie_id', 'cover_ref']
+        fields = ["plot", "actors", "directors", "movie_id", "cover_ref"]
 
         widgets = {
-            'plot': HiddenInput(),
-            'actors' : HiddenInput(),
-            'directors' : HiddenInput(),
-            'movie_id': HiddenInput(),
-            'cover_ref': HiddenInput(),
+            "plot": HiddenInput(),
+            "actors": HiddenInput(),
+            "directors": HiddenInput(),
+            "movie_id": HiddenInput(),
+            "cover_ref": HiddenInput(),
         }

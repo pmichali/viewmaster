@@ -6,13 +6,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewmaster', '0001_initial'),
+        ("viewmaster", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='movie',
-            name='category',
-            field=models.CharField(choices=[('ACTION', 'action'), ('ADVENTURE', 'adventure'), ('ANIMATED', 'animated'), ('CHILDRENS', 'childrens'), ('COMEDY', 'comedy'), ('DOCUMENTARY', 'documentary'), ('DRAMA', 'drama'), ('FANTASY', 'fantasy'), ('HORROR', 'horror'), ('MILITARY', 'military'), ('MISC', 'misc'), ('MUSICAL', 'musical'), ('SCI-FI', 'sci-fi'), ('SUSPENSE', 'suspense'), ('UNKNOWN', 'unknown'), ('WESTERN', 'western')], max_length=20),
+            model_name="movie",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("ACTION", "action"),
+                    ("ADVENTURE", "adventure"),
+                    ("ANIMATED", "animated"),
+                    ("CHILDRENS", "childrens"),
+                    ("COMEDY", "comedy"),
+                    ("DOCUMENTARY", "documentary"),
+                    ("DRAMA", "drama"),
+                    ("FANTASY", "fantasy"),
+                    ("HORROR", "horror"),
+                    ("MILITARY", "military"),
+                    ("MISC", "misc"),
+                    ("MUSICAL", "musical"),
+                    ("SCI-FI", "sci-fi"),
+                    ("SUSPENSE", "suspense"),
+                    ("UNKNOWN", "unknown"),
+                    ("WESTERN", "western"),
+                ],
+                max_length=20,
+            ),
         ),
     ]

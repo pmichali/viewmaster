@@ -7,26 +7,129 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Movie',
+            name="Movie",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(help_text='Up to 60 characters for title.', max_length=60)),
-                ('release', models.IntegerField(help_text='Four digit year of release.')),
-                ('category', models.CharField(choices=[('ACTION', 'action'), ('ADVENTURE', 'adventure'), ('ANIMATED', 'animated'), ('CHILDRENS', 'childrens'), ('COMEDY', 'comedy'), ('DOCUMENTARY', 'documentary'), ('DRAMA', 'drama'), ('FANTASY', 'fantasy'), ('HORROR', 'horror'), ('MILITARY', 'military'), ('MISC', 'misc'), ('MUSIC', 'music'), ('SCI-FI', 'sci-fi'), ('SUSPENSE', 'suspense'), ('UNKNOWN', 'unknown'), ('WESTERN', 'western')], max_length=20)),
-                ('rating', models.CharField(choices=[('G', 'G'), ('PG', 'PG'), ('PG-13', 'PG-13'), ('R', 'R'), ('X', 'X'), ('NR', 'NR'), ('?', '?')], default='?', max_length=5)),
-                ('duration', models.TimeField(help_text='Duration in hh:mm format.')),
-                ('format', models.CharField(choices=[('LD', 'LD'), ('DVD', 'DVD'), ('BR', 'BR'), ('4K', '4K')], max_length=3)),
-                ('aspect', models.CharField(default='?', help_text='Screen aspect ratio (10 chars).', max_length=10)),
-                ('audio', models.CharField(default='?', help_text='Main audio format (10 chars).', max_length=10)),
-                ('collection', models.CharField(blank=True, default='', help_text='Name for a collection of movies.', max_length=10)),
-                ('cost', models.DecimalField(decimal_places=2, help_text='In USD.', max_digits=6)),
-                ('paid', models.BooleanField(default=True, help_text='Indicates movie was purchased, versus being a gift.')),
-                ('bad', models.BooleanField(default=False, help_text='Indicates that movie is not playable, or has playback issues.')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "title",
+                    models.CharField(
+                        help_text="Up to 60 characters for title.", max_length=60
+                    ),
+                ),
+                (
+                    "release",
+                    models.IntegerField(help_text="Four digit year of release."),
+                ),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("ACTION", "action"),
+                            ("ADVENTURE", "adventure"),
+                            ("ANIMATED", "animated"),
+                            ("CHILDRENS", "childrens"),
+                            ("COMEDY", "comedy"),
+                            ("DOCUMENTARY", "documentary"),
+                            ("DRAMA", "drama"),
+                            ("FANTASY", "fantasy"),
+                            ("HORROR", "horror"),
+                            ("MILITARY", "military"),
+                            ("MISC", "misc"),
+                            ("MUSIC", "music"),
+                            ("SCI-FI", "sci-fi"),
+                            ("SUSPENSE", "suspense"),
+                            ("UNKNOWN", "unknown"),
+                            ("WESTERN", "western"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "rating",
+                    models.CharField(
+                        choices=[
+                            ("G", "G"),
+                            ("PG", "PG"),
+                            ("PG-13", "PG-13"),
+                            ("R", "R"),
+                            ("X", "X"),
+                            ("NR", "NR"),
+                            ("?", "?"),
+                        ],
+                        default="?",
+                        max_length=5,
+                    ),
+                ),
+                ("duration", models.TimeField(help_text="Duration in hh:mm format.")),
+                (
+                    "format",
+                    models.CharField(
+                        choices=[
+                            ("LD", "LD"),
+                            ("DVD", "DVD"),
+                            ("BR", "BR"),
+                            ("4K", "4K"),
+                        ],
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "aspect",
+                    models.CharField(
+                        default="?",
+                        help_text="Screen aspect ratio (10 chars).",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "audio",
+                    models.CharField(
+                        default="?",
+                        help_text="Main audio format (10 chars).",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "collection",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="Name for a collection of movies.",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "cost",
+                    models.DecimalField(
+                        decimal_places=2, help_text="In USD.", max_digits=6
+                    ),
+                ),
+                (
+                    "paid",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Indicates movie was purchased, versus being a gift.",
+                    ),
+                ),
+                (
+                    "bad",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Indicates that movie is not playable, or has playback issues.",
+                    ),
+                ),
             ],
         ),
     ]
