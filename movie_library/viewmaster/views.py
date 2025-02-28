@@ -32,12 +32,14 @@ class MovieListView(ListView):
     def post(self, request, **kwargs):
         """Show list based on selected ordering mode."""
         logger.debug("List POST: %s, KWARGS: %s, SESSION: %s", request.POST, kwargs, dict(request.session))
+
         mode = request.POST.get("mode", request.session.get('mode', 'alpha'))
         request.session['mode'] = mode
-        # show_LD = True if request.POST.get("showLD") else False
         showLD = request.POST.get('showLD', '')
         request.session['showLD'] = showLD
-        show_details = True if request.POST.get("show-details") else False
+        show_details = request.POST.get('show_details', '')
+        request.session['show_details'] = show_details
+
         total_movies = Movie.objects.count()
         total_paid = Movie.objects.filter(paid=True).count()
         stats = (
@@ -79,8 +81,10 @@ class MovieListView(ListView):
     def get(self, request, **kwargs):
         """Initial view is alphabetical."""
         logger.debug("List GET: REQUEST %s, KWARGS %s, SESSION: %s", dict(request.GET), kwargs, dict(request.session))
+
         mode = request.session.setdefault('mode', 'alpha')
         showLD = request.session.setdefault('showLD', '')
+        show_details = request.session.setdefault('show_details', '')
         
         total_movies = Movie.objects.count()
         total_paid = Movie.objects.filter(paid=True).count()
@@ -110,7 +114,7 @@ class MovieListView(ListView):
             'movies': movies,
             'mode': mode,
             'showLD': showLD,
-            'show_details': False,
+            'show_details': show_details,
             'total': total_movies,
             'total_paid': total_paid,
             'stats': stats,
