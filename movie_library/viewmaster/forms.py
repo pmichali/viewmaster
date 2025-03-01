@@ -1,4 +1,5 @@
 """Form definitions for viewmaster."""
+
 import logging
 
 from datetime import datetime

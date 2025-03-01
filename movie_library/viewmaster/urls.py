@@ -1,4 +1,5 @@
 """URL definitions for viewmaster sections."""
+
 from django.urls import path
 
 from .views import MovieClearView, MovieCreateUpdateView, MovieDeleteView, MovieFindView
