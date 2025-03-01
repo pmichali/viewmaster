@@ -159,9 +159,8 @@ class MovieFindView(LoginRequiredMixin, View):
         logger.debug(
             "Find GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
-        mode = request.GET.get("mode", "")
         form = self.form_class(initial=self.initial)
-        return render(request, self.template_name, {"form": form, "mode": mode})
+        return render(request, self.template_name, {"form": form})
 
 
 class MovieFindResultsView(LoginRequiredMixin, View):
@@ -186,7 +185,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
         logger.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
-        mode = request.GET.get("mode", "")
         if partial_title:
             results = search_movies(partial_title)
             success = results.get("Response", "Missing")
@@ -200,7 +198,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
             "count": len(matches),
             "partial_title": partial_title or "",
             "identifier": existing_id,
-            "mode": mode,
         }
         return render(request, self.template_name, context)
 
@@ -378,20 +375,19 @@ class MovieLookupView(
             "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
         movie = self.get_object()
-        mode = request.GET.get("mode", "")
-        logger.debug("MOVIE: %s, MODE: %s", movie, mode)
+        logger.debug("MOVIE: %s", movie)
         if not movie.movie_id or movie.movie_id == "unknown":
             logger.debug("Movie does not have IMDB info")
 
             return redirect(
                 reverse("viewmaster:movie-find-results")
-                + f"?{urlencode({'title': movie.title, 'identifier': movie.id, 'mode': mode})}"
+                + f"?{urlencode({'title': movie.title, 'identifier': movie.id})}"
             )
 
         logger.debug("Movie already has IMDB info")
         return redirect(
             reverse("viewmaster:movie-create-update", kwargs={"pk": movie.id})
-            + f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id, 'mode': mode})}"
+            + f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id})}"
         )
 
 
@@ -414,9 +410,8 @@ class MovieDeleteView(
         )
         identifier = int(kwargs.get("pk", "0"))
         movie = Movie.objects.get(pk=identifier)
-        mode = request.GET.get("mode", "")
-        logger.debug("Movie to delete %s (%d), mode: %s", movie, identifier, mode)
-        return render(request, self.template_name, {"movie": movie, "mode": mode})
+        logger.debug("Movie to delete %s (%d)", movie, identifier)
+        return render(request, self.template_name, {"movie": movie})
 
     def post(self, request, *args, **kwargs):
         """Delete the movie"""
