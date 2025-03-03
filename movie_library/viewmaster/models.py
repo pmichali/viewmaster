@@ -5,42 +5,7 @@ from django.urls import reverse
 
 from auditlog.registry import auditlog
 
-
-CATEGORY_CHOICES = [
-    ("ACTION", "action"),
-    ("ADVENTURE", "adventure"),
-    ("ANIMATED", "animated"),
-    ("CHILDRENS", "childrens"),
-    ("COMEDY", "comedy"),
-    ("CRIME", "crime"),
-    ("DOCUMENTARY", "documentary"),
-    ("DRAMA", "drama"),
-    ("FAMILY", "family"),
-    ("FANTASY", "fantasy"),
-    ("HISTORY", "history"),
-    ("HORROR", "horror"),
-    ("MILITARY", "military"),
-    ("MISC", "misc"),
-    ("MUSICAL", "musical"),
-    ("MYSTERY", "mystery"),
-    ("ROMANCE", "romance"),
-    ("SCI-FI", "sci-fi"),
-    ("SUSPENSE", "suspense"),
-    ("THRILLER", "thriller"),
-    ("UNKNOWN", "unknown"),
-    ("WESTERN", "western"),
-]
-
-
-RATING_CHOICES = [
-    ("G", "G"),
-    ("PG", "PG"),
-    ("PG-13", "PG-13"),
-    ("R", "R"),
-    ("X", "X"),
-    ("NR", "NR"),
-    ("?", "?"),
-]
+from .extractors import CATEGORY_CHOICES, RATING_CHOICES
 
 
 FORMAT_CHOICES = [

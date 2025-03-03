@@ -226,8 +226,10 @@ class MovieCreateUpdateView(
         )
         identifier = int(kwargs.get("pk", "0"))
         if identifier:
-            self.object = Movie.objects.get(   # pylint: disable=attribute-defined-outside-init
-                pk=identifier
+            self.object = (  # pylint: disable=attribute-defined-outside-init
+                Movie.objects.get(
+                    pk=identifier
+                )
             )
         else:
             self.object = None  # pylint: disable=attribute-defined-outside-init
@@ -257,7 +259,9 @@ class MovieCreateUpdateView(
 
     def get_movie_info(self, movie_id: str, movie: Movie) -> dict:
         """Pull IMDB info if selected."""
-        existing_IMDB = self.has_movie_id(movie.movie_id) if movie else False  # pylint: disable=invalid-name
+        existing_IMDB = (  # pylint: disable=invalid-name
+            self.has_movie_id(movie.movie_id) if movie else False
+        )
 
         if not existing_IMDB and self.has_movie_id(movie_id):
             logger.debug("Looking up IMDB entry %s", movie_id)
