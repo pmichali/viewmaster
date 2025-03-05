@@ -11,6 +11,9 @@ from viewmaster.api import get_movie, search_movies
 from viewmaster.extractors import extract_rating, extract_time, extract_year
 
 
+CHECK_MARK = "\u2705"
+X_MARK = "\u274c"
+
 logger = logging.getLogger(__name__)
 
 
@@ -135,15 +138,24 @@ def show_selection(details: dict, db_release, db_duration, db_rating):
     """Show the selection made to confirm."""
     print(f"\nTITLE: {details['Title']}")
     release = extract_year(details["Year"])
-    overrided = f" (database had {db_release})" if db_release != release else ""
-    print(f"RELEASED: {release}{overrided}")
+    if db_release != release:
+        status = f"{X_MARK} (database had {db_release})"
+    else:
+        status = CHECK_MARK
+    print(f"RELEASED: {release} {status}")
     rating = extract_rating(details["Rated"])
-    overrided = f" (database had {db_rating})" if db_rating != rating else ""
-    print(f"RATING: {rating}{overrided}")
+    if db_rating != rating:
+        status = f"{X_MARK} (database had {db_rating})"
+    else:
+        status = CHECK_MARK
+    print(f"RATING: {rating} {status}")
     duration = extract_time(details["Runtime"])
     db_duration = db_duration.strftime("%H:%M")
-    overrided = f" (database had {db_duration})" if db_duration != duration else ""
-    print(f"DURATION: {duration}{overrided}")
+    if db_duration != duration:
+        status = f"{X_MARK} (database had {db_duration})"
+    else:
+        status = CHECK_MARK
+    print(f"DURATION: {duration} {status}")
     print(f"IMDB ID: {details['imdbID']}")
     print(f"{details['Plot']}")
     print(f"ACTORS: {details['Actors']}")

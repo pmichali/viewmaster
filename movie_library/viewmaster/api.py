@@ -1,5 +1,6 @@
 """Handles REST requests to OMDb server."""
 
+import os
 import logging
 
 import urllib
@@ -9,7 +10,10 @@ import simplejson
 
 
 logger = logging.getLogger(__name__)
-OMDB_REST_API = "http://www.omdbapi.com/?apikey=REDACTED"
+
+# Get API Key for accessing www.omdbapi.com
+OMDB_API_KEY = os.environ.get('OMDB_API_KEY', 'must-be-created')
+OMDB_REST_API = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}"
 
 
 class APIFailure(Exception):
