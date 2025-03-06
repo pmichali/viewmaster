@@ -78,7 +78,8 @@ class MovieDatabase:
         logger.info("Getting list of movies to process")
         self.query(
             "SELECT id, title, release, rating, duration FROM "
-            "viewmaster_movie as vm where vm.movie_id=''"
+            "viewmaster_movie as vm where vm.movie_id='' "
+            "order by vm.title"
         )
         all_movies = self.cursor.fetchall()
         self.total = len(all_movies)
@@ -123,14 +124,15 @@ class MovieDatabase:
 
 def show_candidates(results: dict):
     """Display the possible match results."""
-    print(" 0) SKIP SELECTION FOR THIS MOVIE")
-    if results.get("Response") != "True":
-        return 0
-    items = results.get("Search")
+    items = results.get("Search", [])
     num = len(items)
-    for i in range(num):
-        entry = items[i]
-        print(f'{i+1:2d}) {entry["Year"]} {entry["Title"]} ({entry["Type"]})')
+    print(" 0) SKIP SELECTION FOR THIS MOVIE")
+    if results.get("Response") == "True":
+        for i in range(num):
+            entry = items[i]
+            print(f'{i+1:2d}) {entry["Year"]} {entry["Title"]} ({entry["Type"]})')
+    num += 1
+    print(f'{num:2d}) Manually enter movie ID')
     return num
 
 
@@ -183,8 +185,15 @@ def imdb_import():
                     logger.info("Skipping movie '%s' (%d)", title, release)
                     print("Skipping movie")
                     break
-                movie_id = results["Search"][int(choice) - 1]["imdbID"]
+                choice = int(choice)
+                if choice == num:
+                    movie_id = input("Enter IMDB ID: ")
+                else:
+                    movie_id = results["Search"][choice - 1]["imdbID"]
                 details = get_movie(movie_id)
+                if details.get('Response') != 'True':
+                    print(f"\nERROR: {details.get('Error', 'Unknown')}\n")
+                    continue
                 show_selection(details, release, duration, rating)
                 choice = input("Enter choice Save, Back, Ignore, eXit[S]: ")
                 if choice in ("x", "X"):

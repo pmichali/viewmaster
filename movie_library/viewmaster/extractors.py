@@ -64,7 +64,7 @@ def extract_time(time_str):
 
 def extract_rating(rating):
     """Ensure rating within set of known ratings."""
-    return RATINGS_DICT.get(rating, "?")
+    return RATINGS_DICT.get(rating, "NR")
 
 
 def extract_year(year):
