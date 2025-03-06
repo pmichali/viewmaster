@@ -13,6 +13,8 @@ remotely with your provided domain name.
 UPDATE TO INSTRUCTIONS FOR VIEWMASTER 0.2.x
 ===========================================
 
+NOTE: Will update blog for new instructions.
+
 The deploy/viewmaster-secrets.env file in Git has dummy values that you must modify for your
 use. To make things easier (and not risking committing the updated file with live data), I
 renamed the file to viewmaster-secrets.env.template in the Git repo. You can then copy the file
@@ -23,7 +25,7 @@ any private info to Git.
 USING OMDB FOR MOVIE INFO
 =========================
 
-There is a open-source movie library at http://www.omdbapi.com/ which can be used to provide the
+There is a free movie library at http://www.omdbapi.com/ which can be used to provide the
 title, plot, actor(s), director(s), poster, release date, rating, duration, among other data for
 each movie.
 
