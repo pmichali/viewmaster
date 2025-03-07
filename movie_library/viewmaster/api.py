@@ -12,7 +12,7 @@ import simplejson
 logger = logging.getLogger(__name__)
 
 # Get API Key for accessing www.omdbapi.com
-OMDB_API_KEY = os.environ.get('OMDB_API_KEY', 'must-be-created')
+OMDB_API_KEY = os.environ.get("OMDB_API_KEY", "must-be-created")
 OMDB_REST_API = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}"
 
 

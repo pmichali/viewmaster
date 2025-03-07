@@ -132,7 +132,7 @@ def show_candidates(results: dict):
             entry = items[i]
             print(f'{i+1:2d}) {entry["Year"]} {entry["Title"]} ({entry["Type"]})')
     num += 1
-    print(f'{num:2d}) Manually enter movie ID')
+    print(f"{num:2d}) Manually enter movie ID")
     return num
 
 
@@ -191,7 +191,7 @@ def imdb_import():
                 else:
                     movie_id = results["Search"][choice - 1]["imdbID"]
                 details = get_movie(movie_id)
-                if details.get('Response') != 'True':
+                if details.get("Response") != "True":
                     print(f"\nERROR: {details.get('Error', 'Unknown')}\n")
                     continue
                 show_selection(details, release, duration, rating)

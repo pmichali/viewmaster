@@ -227,9 +227,7 @@ class MovieCreateUpdateView(
         identifier = int(kwargs.get("pk", "0"))
         if identifier:
             self.object = (  # pylint: disable=attribute-defined-outside-init
-                Movie.objects.get(
-                    pk=identifier
-                )
+                Movie.objects.get(pk=identifier)
             )
         else:
             self.object = None  # pylint: disable=attribute-defined-outside-init
@@ -280,7 +278,7 @@ class MovieCreateUpdateView(
         overrides = {}
         suggested_genres = ""
 
-        rating = extract_rating(imdb_info.get("Rated", "?"))
+        rating = extract_rating(imdb_info.get("Rated", "NR"))
         duration = (
             extract_time(imdb_info.get("Runtime")) if imdb_info.get("Runtime") else "?"
         )
@@ -295,6 +293,7 @@ class MovieCreateUpdateView(
                 }
             )
         else:
+            initial["category"] = movie.category.upper()
             if rating not in ("?", movie.rating):
                 logger.warning(
                     "Overriding existing MPAA rating %s with IMDB value %s",
@@ -340,7 +339,10 @@ class MovieCreateUpdateView(
     def get(self, request, *args, **kwargs):
         """Show form to create/update movie."""
         logger.debug(
-            "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
+            "Create/Update GET: REQUEST %s, ARGS %s, KWARGS %s",
+            dict(request.GET),
+            args,
+            kwargs,
         )
         movie_id = request.GET.get("movie_id") or "unknown"
         title = request.GET.get("title") or ""

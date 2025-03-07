@@ -8,6 +8,7 @@ CATEGORY_CHOICES = [
     ("ACTION", "action"),
     ("ADVENTURE", "adventure"),
     ("ANIMATED", "animated"),
+    ("BIOGRAPHY", "biography"),
     ("CHILDRENS", "childrens"),
     ("COMEDY", "comedy"),
     ("CRIME", "crime"),
@@ -43,6 +44,8 @@ RATING_CHOICES = [
 
 RATINGS_DICT = dict(RATING_CHOICES)
 RATINGS_DICT["Not Rated"] = "NR"
+
+CATEGORY_DICT = dict(CATEGORY_CHOICES)
 
 logger = logging.getLogger(__name__)
 year_re = re.compile(r"\d+")
@@ -91,6 +94,10 @@ def order_genre_choices(suggested):
         sg.replace("SCIENCE FICTION", "SCI-FI") for sg in suggested_genres
     ]
     suggested_genres = [sg.replace("WAR", "MILITARY") for sg in suggested_genres]
+    # Warn of unknown genres
+    for sg in suggested_genres:
+        if sg not in CATEGORY_DICT:
+            logging.warning("Genre %s is not in set of known genres", sg)
     # Sort them
     suggested_genres.sort()
     logger.debug("Modified genres: %s", suggested_genres)

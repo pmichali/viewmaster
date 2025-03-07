@@ -44,6 +44,15 @@ td > a:first-child {
   }
 }
 
+#manual_entry {
+	margin: 20px 0;
+}
+
+#byId {
+	width: 140px;
+	display: inline;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -91,9 +100,29 @@ td > a:first-child {
 	</tbody>
 	</table>
 {% endif %}
+<form method="get" action="{% url 'viewmaster:movie-create-update' identifier %}" id="manual_entry">
+  <label for="byID">IMDB ID</label>
+  <input type="hidden" name="title" value="{{ partial_title|urlencode }}"/>
+  <input type="text" class="form-control" name="movie_id" id="byId" placeholder="Enter ID here..." />
+  <button class="btn btn-success" id="manualButton">Use</button>    
+</form>
 <p>
   <button class="btn btn-primary" onclick="window.location.href='{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id=unknown'">Skip</button>
   <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
   <button class="btn btn-info" onclick="window.location.href='{% url 'viewmaster:movie-list' %}'">Cancel</button>
 </p>
 {% endblock %}
+
+{% block javascript %}
+  <script>
+  document.getElementById("manualButton").onclick = function () {
+	  manual_id = document.getElementById("byId").value
+	  if (manual_id == "") {
+		  alert("You must enter a movie ID in field for manual mode...")
+		  return false;
+	  }
+	  return true;
+  }
+  </script>
+{% endblock %}
+
