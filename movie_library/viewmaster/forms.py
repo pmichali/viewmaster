@@ -5,13 +5,35 @@ import logging
 from datetime import datetime
 
 from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, ModelForm
-from django.forms import Textarea, NumberInput, TextInput, TimeInput
+from django.forms import BooleanField, Textarea, NumberInput, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
 from .models import Movie
 
 
 logger = logging.getLogger(__name__)
+
+MODE_CHOICES = [
+    ("alpha", "Alphabetical"),
+    ("cat_alpha", "Genre/Alpha"),
+    ("cat_date_alpha", "Genre/Date/Alpha"),
+    ("date", "Date/Alpha"),
+    ("collection", "Collection/Date"),
+    ("disk", "Format/Alpha"),
+]
+
+
+class MovieListForm(Form):
+    """List movies in different modes."""
+
+    mode = ChoiceField(choices=MODE_CHOICES)
+    show_ld = BooleanField(required=False)
+    show_details = BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        """Setup movie list form."""
+        logger.debug("List form: ARGS %s, KWARGS %s", args, kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class MovieFindForm(Form):

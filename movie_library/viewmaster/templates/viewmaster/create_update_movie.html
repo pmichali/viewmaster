@@ -195,10 +195,6 @@
             window.location.href = "{% url 'viewmaster:movie-delete' movie.id %}";
             return false;  // So that form is not submitted and form URL used
         }
-<!--        document.getElementById("clearBtn").onclick = function () {-->
-<!--            window.location.href = "{% url 'viewmaster:movie-clear' movie.id %}";-->
-<!--            return false;  // So that form is not submitted and form URL used-->
-<!--        }-->
     {% endif %}
     document.getElementById("cancelBtn").onclick = function () {
         window.location.href = "{% url 'viewmaster:movie-list' %}";

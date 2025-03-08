@@ -9,43 +9,29 @@
 {% block content %}
 {% load static %}
 <p id="pagehead">Movie Catalog - <span id="vers">v0.2.2</span></p>
-<form action="{% url 'viewmaster:movie-list' %}" method="post" class="display: inline-block">
+<form action="{% url 'viewmaster:movie-list' %}" id="view_form" method="post" class="display: inline-block">
 <div class="container-fluid text-center">
   <div class="row">
-	<div class="col-auto mr-2 mb-2 d-none">
-	{% csrf_token %}
-	<!-- View modes -->
+    <div class="col-auto mr-2 mb-2 d-none">
+      {% csrf_token %}
+ 	  <!-- View modes -->
+    </div>
+    <div class="col-auto mt-2 fw-bold">
+	    <label class="form-select-label" for="mode">Mode:</label>
 	</div>
- 	<div class="col-auto mb-2">
-	    <button type="submit" name="mode" value="alpha" class="btn btn-primary">Alphabetical</button>
-	</div>
-	<div class="col-auto mb-2">
-		<button type="submit" name="mode" value="cat_alpha" class="btn btn-secondary">Genre/Alpha</button>
-	</div>
-	<div class="col-auto mb-2">
-		<button type="submit" name="mode" value="cat_date_alpha" class="btn btn-secondary">Genre/Date/Alpha</button>
-	</div>
-	<div class="col-auto mb-2">
-		<button type="submit" name="mode" value="date" class="btn btn-success">Date/Alpha</button>
-	</div>
-	<div class="col-auto mb-2">
-		<button type="submit" name="mode" value="collection" class="btn btn-info">Collection/Date</button>
-	</div>
-	<div class="col-auto mb-2">
-		<button type="submit" name="mode" value="disk" class="btn btn-info">Format/Alpha</button>
-	</div>
+	<div class="col-2 mt-2">
+		{{ form.mode }}
+    </div>
 	<!-- Modifiers -->
 	<div class="col-auto mb-2 mt-2">
 	  <div class="form-check">
-	    <input class="form-check-input" type="checkbox" id="details"
-	           name="show_details" value="show" {% if show_details %}checked{% endif %} >
+	    {{ form.show_details }}
 	    <label class="form-check-label" for="details"> Show Details</label>
 	  </div>
 	</div>
 	<div class="col-auto mb-2 mt-2">
 	  <div class="form-check">
-	    <input class="form-check-input" type="checkbox" id="LD"
-	           name="show_ld" value="show" {% if show_ld %}checked{% endif %} >
+	    {{ form.show_ld }}
 	    <label class="form-check-label" for="LD"> Show LDs</label>
 	  </div>
 	</div>
@@ -69,19 +55,19 @@
       <input type="text" class="form-control" name="phrase" id="phrase" placeholder="title search" >
     </div>
     <div class="col-auto mb-2">
-      <input type="image" name="search" src="{% static 'viewmaster/search.png' %} "border="0" style="width: 32px;" />
+      <input type="image" name="search" id="search" src="{% static 'viewmaster/search.png' %} "border="0" style="width: 32px;" />
     </div>
   </div>
 </div>
 </form>
 	{% if movies %}
-	  {% if mode == "alpha" %}
+	  {% if form.mode.value == "alpha" %}
 	    {% regroup movies by alpha_order as ordered_movies %}
-	  {% elif mode == "cat_alpha" or mode == "cat_date_alpha" %}
+	  {% elif form.mode.value == "cat_alpha" or mode == "cat_date_alpha" %}
 	    {% regroup movies by category_order as ordered_movies %}
-	  {% elif mode == "date" %}
+	  {% elif form.mode.value == "date" %}
 	    {% regroup movies by release_order as ordered_movies %}
-	  {% elif mode == "collection" %}
+	  {% elif form.mode.value == "collection" %}
 	    {% regroup movies by collection_order as ordered_movies %}
 	  {% else %}
 	    {% regroup movies by format_order as ordered_movies %}
@@ -110,7 +96,7 @@
 	    <!-- SHOW MOVIE LIST -->
 	    
 	    <div class="container-fluid categoryTable">
-	    {% if not show_details %}
+	    {% if not form.show_details.value %}
           <div class="row header">
             <div class="row">
               <div class="col-lg-5">TITLE</div>
@@ -124,7 +110,7 @@
 	    {% endif %}
  	    {% for movie in movie_group %}
 		  <a class="row tableRow" href="{% url 'viewmaster:movie-lookup' movie.id %}">
-	      {% if show_details %}
+	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
 		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
@@ -172,3 +158,23 @@
 	
 	<p>User: {{ user }} <a href="/admin/logout/">LOGOUT</a></p>
 {% endblock %}
+
+{% block javascript %}
+  <script>
+    document.getElementById("id_mode").onchange = function () {
+    	document.getElementById("view_form").submit();
+    }
+    document.getElementById("id_mode").onclick = function () {
+    	document.getElementById("view_form").submit();
+    }
+    document.getElementById("search").onclick = function () {
+  	  phrase = document.getElementById("phrase").value
+  	  if (phrase == "") {
+  		  alert("No phrase entered for search.")
+  		  return false;
+  	  }
+  	  return true;
+    }
+  </script>
+{% endblock %}
+

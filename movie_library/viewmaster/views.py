@@ -21,7 +21,7 @@ from django.views.generic.edit import (
 from .api import get_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie
-from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm
+from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm, MovieListForm
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 
 class MovieListView(ListView):
     """View for display of movies in a variety of orderings."""
+
+    template_name = "viewmaster/movie_list.html"
+    form_class = MovieListForm
 
     context_object_name = "movies"
 
@@ -80,17 +83,24 @@ class MovieListView(ListView):
             )
         else:  # disk format
             movies = movies.order_by(Lower("format"), Lower("title"))
-        logger.debug("Have %d movies with mode %s", total_movies, mode)
-        context = {
-            "movies": movies,
+        logger.debug("POST Have %d movies with mode %s", total_movies, mode)
+        initial_values = {
             "mode": mode,
             "show_ld": show_ld,
             "show_details": show_details,
-            "total": total_movies,
-            "total_paid": total_paid,
-            "stats": stats,
         }
-        return render(request, "viewmaster/movie_list.html", context)
+        form = self.form_class(initial=initial_values)
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "total": total_movies,
+                "total_paid": total_paid,
+                "stats": stats,
+                "movies": movies,
+            },
+        )
 
     def get(self, request, *args, **kwargs):
         """Initial view is alphabetical."""
@@ -134,17 +144,25 @@ class MovieListView(ListView):
             )
         else:  # disk format
             movies = movies.order_by(Lower("format"), Lower("title"))
-        context = {
-            "movies": movies,
+        initial_values = {
             "mode": mode,
             "show_ld": show_ld,
             "show_details": show_details,
-            "total": total_movies,
-            "total_paid": total_paid,
-            "stats": stats,
         }
-        logger.debug("Have %d movies with mode %s", total_movies, mode)
-        return render(request, "viewmaster/movie_list.html", context)
+        form = self.form_class(initial=initial_values)
+
+        logger.debug("GET Have %d movies with mode %s", total_movies, mode)
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "total": total_movies,
+                "total_paid": total_paid,
+                "stats": stats,
+                "movies": movies,
+            },
+        )
 
 
 class MovieFindView(LoginRequiredMixin, View):
