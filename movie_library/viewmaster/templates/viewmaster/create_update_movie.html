@@ -69,12 +69,18 @@
       		<td {% if overrides.release %}class="overridden"{% endif %}>
       		  {{ form.release }}
       		  {{ form.release.errors }}
+      		  {% if overrides.release %}
+      		      <div>(was {{ overrides.release_value }})</div>
+      		  {% endif %}
       		</td>
       		<th>
       		  <label for="{{ form.rating.id_for_label }}">Rating</label>
       		</th>
       		<td {% if overrides.rating %}class="overridden"{% endif %}>
       		  {{ form.rating }}
+      		  {% if overrides.rating %}
+      		      <div>(was {{ overrides.rating_value }})</div>
+      		  {% endif %}
       		</td>
       		<th>
       		  <label for="{{ form.duration.id_for_label }}">Duration</label>
@@ -82,6 +88,9 @@
       		<td {% if overrides.duration %}class="overridden"{% endif %}>
       		  {{ form.duration }}
       		  {{ form.duration.errors }}
+      		  {% if overrides.duration %}
+      		      <div>(was {{ overrides.duration_value }})</div>
+      		  {% endif %}
       		</td>
       	</tr>
      	<tr>

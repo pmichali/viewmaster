@@ -302,6 +302,7 @@ class MovieCreateUpdateView(
                 )
                 initial["rating"] = rating
                 overrides["rating"] = True
+                overrides["rating_value"] = movie.rating
             stored_duration = movie.duration.strftime("%H:%M")
             if duration not in ("?", stored_duration):
                 logger.warning(
@@ -311,6 +312,7 @@ class MovieCreateUpdateView(
                 )
                 initial["duration"] = duration
                 overrides["duration"] = True
+                overrides["duration_value"] = stored_duration
             if release not in ("?", movie.release):
                 logger.warning(
                     "Overriding existing release date %s with IMDB value %s",
@@ -319,6 +321,7 @@ class MovieCreateUpdateView(
                 )
                 initial["release"] = release
                 overrides["release"] = True
+                overrides["release_value"] = movie.release
         if imdb_info:  # New info provided
             logger.debug("Storing collected IMDB info")
             initial.update(
