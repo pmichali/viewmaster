@@ -58,7 +58,7 @@ spec:
           persistentVolumeClaim:
             claimName: viewmaster-app-pvc
       containers:
-        - image: pmichali/viewmaster-app:v0.2.2
+        - image: pmichali/viewmaster-app:v0.2.3
           imagePullPolicy: Always  # IfNotPresent
           name: app
           ports:
