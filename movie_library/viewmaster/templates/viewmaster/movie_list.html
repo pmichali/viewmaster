@@ -6,6 +6,18 @@
   <link href="{% static 'viewmaster/css/movie-list.css' %}" media="all" rel="stylesheet" type="text/css" />
 {% endblock %}
 
+{% block local_styles %}
+.tight-right {
+	margin-right: 0px;
+	padding-right: 1px;
+}
+
+.tight-left {
+	margin-left: 0px;
+	padding-left: 0px;
+}
+{% endblock %}
+
 {% block content %}
 {% load static %}
 <p id="pagehead">Movie Catalog - <span id="vers">v0.2.2</span></p>
@@ -51,7 +63,10 @@
 		<strong>{{ s.format }}:</strong> {{ s.count }} ave ${{ s.average | floatformat:"2" }}
 	  </div>
     {% endfor %}
-    <div class="col-3 mb-2">
+    <div class="col-auto tight-right h-100">
+    	{{ form.search_by }}
+    </div>
+    <div class="col-3 tight-left">
       <input type="text" class="form-control" name="phrase" id="phrase" placeholder="title search" >
     </div>
     <div class="col-auto mb-2">

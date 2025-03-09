@@ -22,6 +22,12 @@ MODE_CHOICES = [
     ("disk", "Format/Alpha"),
 ]
 
+SEARCH_CHOICES = [
+    ("title", "TITLE"),
+    ("plot", "PLOT"),
+    ("people", "PEOPLE"),
+]
+
 
 class MovieListForm(Form):
     """List movies in different modes."""
@@ -29,11 +35,13 @@ class MovieListForm(Form):
     mode = ChoiceField(choices=MODE_CHOICES)
     show_ld = BooleanField(required=False)
     show_details = BooleanField(required=False)
+    search_by = ChoiceField(choices=SEARCH_CHOICES)
 
     def __init__(self, *args, **kwargs):
         """Setup movie list form."""
         logger.debug("List form: ARGS %s, KWARGS %s", args, kwargs)
         super().__init__(*args, **kwargs)
+        self.fields["search_by"].widget.attrs["class"] = "form-select form-select-md"
 
 
 class MovieFindForm(Form):
