@@ -25,7 +25,8 @@ MODE_CHOICES = [
 SEARCH_CHOICES = [
     ("title", "TITLE"),
     ("plot", "PLOT"),
-    ("people", "PEOPLE"),
+    ("actors", "ACTORS"),
+    ("directors", "DIRECTORS"),
 ]
 
 

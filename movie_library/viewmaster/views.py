@@ -3,7 +3,7 @@
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg
 from django.db.models.functions import Lower
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -65,10 +65,10 @@ class MovieListView(ListView):
         ):
             phrase = request.POST.get("phrase")
             how = request.POST.get("search_by", "title")
-            if how == "people":
-                movies = movies.filter(
-                    Q(actors__icontains=phrase) | Q(directors__icontains=phrase)
-                )
+            if how == "actors":
+                movies = movies.filter(actors__icontains=phrase)
+            elif how == "directors":
+                movies = movies.filter(directors__icontains=phrase)
             elif how == "plot":
                 movies = movies.filter(plot__icontains=phrase)
             else:  # Default is title
