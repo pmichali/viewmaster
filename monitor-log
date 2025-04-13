@@ -1,0 +1,5 @@
+until [ "`kubectl get pods -n viewmaster -l tier=app -o jsonpath='{.items[*].status.phase}'`" == "Running" ]
+do
+	sleep 5
+done
+kubectl logs -f -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1`

@@ -1,0 +1,1 @@
+kubectl delete -n viewmaster pod `kubectl get pod -n viewmaster | cut -f1 -d" " | tail -1`
