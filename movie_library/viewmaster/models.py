@@ -144,25 +144,13 @@ class Movie(models.Model):
         """Code indicating the disk format order."""
         return self.format.upper()
 
-    @property
-    def duration_str(self):
-        """Display custom format for duration."""
-        if not self.duration:
-            return "?"
-        hrs = int(self.duration.strftime("%H"))
-        mins = int(self.duration.strftime("%M"))
-        return f"{hrs}h {mins}m"
-
     def __str__(self):
         """Show the movie entry for debug."""
         return (
-            f"title='{self.title}' ({self.id}) plot='{self.plot}' actors='{self.actors}' "
-            f"directors='{self.directors}' cat={self.category} release={self.release} "
-            f"rating={self.rating} duration={self.duration_str} format={self.format} "
+            f"id={self.id} details={self.details} format={self.format} "
             f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
-            f"movie_id={self.movie_id} cost=${self.cost:6.2f} "
+            f"cost=${self.cost:6.2f} "
             f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'} "
-            f"cover_ref={self.cover_ref}"
         )
 
 
