@@ -8,7 +8,7 @@ from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, M
 from django.forms import BooleanField, Textarea, NumberInput, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
-from .models import Movie
+from .models import Movie, MovieDetails
 
 
 logger = logging.getLogger(__name__)
@@ -64,13 +64,13 @@ class MovieFindForm(Form):
         )
 
 
-class MovieCreateEditForm(ModelForm):
-    """Model based form for creating a movie."""
+class MovieDetailsCreateEditForm(ModelForm):
+    """Model based form for creating details for a movie."""
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Model, fields, and custom widgets for form."""
 
-        model = Movie
+        model = MovieDetails
         fields = [
             "title",
             "plot",
@@ -78,17 +78,10 @@ class MovieCreateEditForm(ModelForm):
             "directors",
             "release",
             "rating",
-            "category",
-            "format",
+            "genre",
             "duration",
-            "aspect",
-            "audio",
-            "collection",
-            "cost",
-            "paid",
-            "bad",
-            "movie_id",
-            "cover_ref",
+            "source",
+            "cover_url",
         ]
         widgets = {
             "title": TextInput(attrs={"size": 60, "autofocus": True}),
@@ -97,12 +90,8 @@ class MovieCreateEditForm(ModelForm):
             "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "release": DateInput(format="%Y", attrs={"size": 6}),
             "duration": TimeInput(format="%H:%M", attrs={"size": 6}),
-            "aspect": TextInput(attrs={"size": 10}),
-            "audio": TextInput(attrs={"size": 10}),
-            "collection": TextInput(attrs={"size": 10}),
-            "cost": NumberInput(attrs={"size": 6}),
-            "movie_id": TextInput(attrs={"size": 12, "tabindex": -1}),
-            "cover_ref": HiddenInput(),
+            "source": TextInput(attrs={"size": 12, "tabindex": -1}),
+            "cover_url": HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -114,7 +103,7 @@ class MovieCreateEditForm(ModelForm):
             # Create new form field to be able to set the choices. If try to just change
             # the choices attribute, it will be ignored, as there is one already.
             new_choices = kwargs["initial"]["category_choices"]
-            self.fields["category"] = ChoiceField(
+            self.fields["genre"] = ChoiceField(
                 choices=new_choices, help_text="Select a genre"
             )
             logger.debug("Overriding choices")
@@ -145,6 +134,48 @@ class MovieCreateEditForm(ModelForm):
             raise ValidationError(f"release date {release_year} is in future")
         return release
 
+
+class MovieCreateEditForm(ModelForm):
+    """Model based form for creating a movie."""
+
+    class Meta:  # pylint: disable=too-few-public-methods
+        """Model, fields, and custom widgets for form."""
+
+        model = Movie
+        fields = [
+            "format",
+            "aspect",
+            "audio",
+            "collection",
+            "cost",
+            "paid",
+            "bad",
+        ]
+        widgets = {
+            "aspect": TextInput(attrs={"size": 10}),
+            "audio": TextInput(attrs={"size": 10}),
+            "collection": TextInput(attrs={"size": 10}),
+            "cost": NumberInput(attrs={"size": 6}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Enabling tool tips for the form."""
+        logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
+        super().__init__(*args, **kwargs)
+
+        # Set help text...
+        for field in self.fields:
+            help_text = self.fields[field].help_text
+            self.fields[field].help_text = None
+            if help_text != "":
+                self.fields[field].widget.attrs.update(
+                    {
+                        "data-bs-toggle": "tooltip",
+                        "title": help_text,
+                        "data-bs-placement": "right",
+                    }
+                )
+
     def clean_cost(self):
         """Ensure cost is a non-negative amount."""
         cost = self.cleaned_data["cost"]
@@ -159,13 +190,13 @@ class MovieClearForm(ModelForm):
     class Meta:  # pylint: disable=too-few-public-methods
         """Model and fields for form."""
 
-        model = Movie
-        fields = ["plot", "actors", "directors", "movie_id", "cover_ref"]
+        model = MovieDetails
+        fields = ["plot", "actors", "directors", "source", "cover_url"]
 
         widgets = {
             "plot": HiddenInput(),
             "actors": HiddenInput(),
             "directors": HiddenInput(),
-            "movie_id": HiddenInput(),
-            "cover_ref": HiddenInput(),
+            "source": HiddenInput(),
+            "cover_url": HiddenInput(),
         }

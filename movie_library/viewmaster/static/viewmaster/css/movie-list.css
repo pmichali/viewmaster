@@ -99,3 +99,9 @@ a {
 .plot {
   height: 72px;  /* reserve three lines for plot */
 }
+
+.bad {
+	color: red;
+	font-weight: bold;
+}
+

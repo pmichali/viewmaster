@@ -19,39 +19,40 @@
         <tr>
             <td colspan="6">
               {{ form.non_field_errors }}
+              {{ details_form.non_field_errors }}
             </td>
         </tr>
      	<tr>
       		<th>
-      		  <label for="{{ form.title.id_for_label }}">Title</label>
+      		  <label for="{{ details_form.title.id_for_label }}">Title</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.title }}
-      		  {{ form.title.errors }}
+      		  {{ details_form.title }}
+      		  {{ details_form.title.errors }}
       		</td>
       	</tr>
       	<tr>
       		<th>
-      		  <label for="{{ form.plot.id_for_label }}">Plot</label>
+      		  <label for="{{ details_form.plot.id_for_label }}">Plot</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.plot }}
+      		  {{ details_form.plot }}
       		</td>
       	</tr>
      	<tr>
       		<th>
-      		  <label for="{{ form.actors.id_for_label }}">Actor(s)</label>
+      		  <label for="{{ details_form.actors.id_for_label }}">Actor(s)</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.actors }}
+      		  {{ details_form.actors }}
       		</td>
       	</tr>
      	<tr>
       		<th>
-      		  <label for="{{ form.directors.id_for_label }}">Director(s)</label>
+      		  <label for="{{ details_form.directors.id_for_label }}">Director(s)</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.directors }}
+      		  {{ details_form.directors }}
       		</td>
       	</tr>
       </tbody>
@@ -64,30 +65,30 @@
      <tbody>
     	<tr>
       		<th>
-      		  <label for="{{ form.release.id_for_label }}">Release</label>
+      		  <label for="{{ details_form.release.id_for_label }}">Release</label>
       		</th>
       		<td {% if overrides.release %}class="overridden"{% endif %}>
-      		  {{ form.release }}
-      		  {{ form.release.errors }}
+      		  {{ details_form.release }}
+      		  {{ details_form.release.errors }}
       		  {% if overrides.release %}
       		      <div>(was {{ overrides.release_value }})</div>
       		  {% endif %}
       		</td>
       		<th>
-      		  <label for="{{ form.rating.id_for_label }}">Rating</label>
+      		  <label for="{{ details_form.rating.id_for_label }}">Rating</label>
       		</th>
       		<td {% if overrides.rating %}class="overridden"{% endif %}>
-      		  {{ form.rating }}
+      		  {{ details_form.rating }}
       		  {% if overrides.rating %}
       		      <div>(was {{ overrides.rating_value }})</div>
       		  {% endif %}
       		</td>
       		<th>
-      		  <label for="{{ form.duration.id_for_label }}">Duration</label>
+      		  <label for="{{ details_form.duration.id_for_label }}">Duration</label>
       		</th>
       		<td {% if overrides.duration %}class="overridden"{% endif %}>
-      		  {{ form.duration }}
-      		  {{ form.duration.errors }}
+      		  {{ details_form.duration }}
+      		  {{ details_form.duration.errors }}
       		  {% if overrides.duration %}
       		      <div>(was {{ overrides.duration_value }})</div>
       		  {% endif %}
@@ -101,11 +102,11 @@
       		  {{ form.format }}
       		</td>
       		<th>
-      		  <label for="{{ form.category.id_for_label }}">Genre</label>
+      		  <label for="{{ details_form.genre.id_for_label }}">Genre</label>
       		</th>
       		<td>
-      		  {{ form.category }}
-      		  {{ form.category.errors }}
+      		  {{ details_form.genre }}
+      		  {{ details_form.genre.errors }}
       		</td>
        	</tr>
     	<tr>
@@ -144,11 +145,11 @@
       		  <label for="{{ form.title.id_for_label }}">Movie ID</label>
       		</th>
       		<td colspan="2">
-      		  {{ form.movie_id }}
+      		  {{ details_form.source }}
       		</td>
       		<td rowspan="2">
-     		  {% if "http" in form.cover_ref.value %}
-      			<img src="{{ form.cover_ref.value }}" width="100" alt="Movie Poster" />
+     		  {% if "http" in details_form.cover_url.value %}
+      			<img src="{{ details_form.cover_url.value }}" width="100" alt="Movie Poster" />
       		  {% endif %}
        		</td>
       	</tr>
@@ -176,7 +177,7 @@
        </tbody>
       </table>
    	  </fieldset>
-   	  <p>{{ form.cover_ref }}</p> <!-- this is hidden, but needed -->
+   	  <p>{{ details_form.cover_url }}</p> <!-- this is hidden, but needed -->
       <input id="save" type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
       <button id="cancelBtn" class="btn btn-info">Cancel</button>

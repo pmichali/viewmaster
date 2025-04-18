@@ -39,6 +39,14 @@ class MovieDetails(models.Model):
     )
     cover_url = models.URLField(blank=True, default="", help_text="Poster image URL.")
 
+    @classmethod
+    def find(cls, imdb_id: str, title: str = ""):
+        """Lookup details by IMDB ID."""
+        try:
+            return cls.objects.get(source=imdb_id)
+        except cls.DoesNotExist:
+            return cls.objects.filter(title=title).first()
+
     @property
     def duration_str(self):
         """Display custom format for duration."""
@@ -119,7 +127,7 @@ class Movie(models.Model):
     @property
     def alpha_order(self):
         """Code indicating the alphabetical order."""
-        first = self.title[0].upper()  # pylint: disable=unsubscriptable-object
+        first = self.details.title[0].upper()  # pylint: disable=unsubscriptable-object
         if first in "0123456789":
             return "#"
         return first
@@ -127,12 +135,12 @@ class Movie(models.Model):
     @property
     def category_order(self):
         """Code indicating the category name order."""
-        return self.category.upper()
+        return self.details.genre.upper()
 
     @property
     def release_order(self):
         """Code indicating the release date order."""
-        return self.release
+        return self.details.release
 
     @property
     def collection_order(self):

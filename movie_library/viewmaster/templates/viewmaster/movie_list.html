@@ -78,7 +78,7 @@
 	{% if movies %}
 	  {% if form.mode.value == "alpha" %}
 	    {% regroup movies by alpha_order as ordered_movies %}
-	  {% elif form.mode.value == "cat_alpha" or mode == "cat_date_alpha" %}
+	  {% elif form.mode.value == "cat_alpha" or form.mode.value == "cat_date_alpha" %}
 	    {% regroup movies by category_order as ordered_movies %}
 	  {% elif form.mode.value == "date" %}
 	    {% regroup movies by release_order as ordered_movies %}
@@ -128,12 +128,12 @@
 	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
-		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
+		        <img src="{{ movie.details.cover_url }}" width="75" alt="cover" />
 		      </div>
 		    </div>
 		    <div class="col-lg-12 rest">
 		      <div class="row"> <!-- rest of movie info, left of cover -->
-		        <div class="col-lg-7">{{ movie.details.title }}</div>
+		        <div class="col-lg-7{% if movie.bad %} bad{% endif %}">{{ movie.details.title }}</div>
 		        <div class="col-lg">{{ movie.details.rating }}</div>
 		        <div class="col-lg-2">{{ movie.details.genre }}</div>
 		        <div class="col-lg">{{ movie.details.release }}</div>
@@ -154,7 +154,7 @@
 		    </div>
 		  {% else %}
 		    <div class="row">
-		      <div class="col-lg-5">{{ movie.details.title }}</div>
+		      <div class="col-lg-5{% if movie.bad %} bad{% endif %}">{{ movie.details.title }}</div>
 		      <div class="col-lg">{{ movie.details.rating }}</div>
 		      <div class="col-lg-3">{{ movie.details.genre }}</div>
 		      <div class="col-lg">{{ movie.details.release }}</div>

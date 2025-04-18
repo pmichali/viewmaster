@@ -5,6 +5,7 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
 from django.db.models.functions import Lower
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import urlencode
@@ -20,8 +21,9 @@ from django.views.generic.edit import (
 
 from .api import get_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
-from .models import Movie
-from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm, MovieListForm
+from .models import Movie, MovieDetails
+from .forms import MovieClearForm, MovieCreateEditForm, MovieDetailsCreateEditForm
+from .forms import MovieFindForm, MovieListForm
 
 
 logger = logging.getLogger(__name__)
@@ -59,38 +61,44 @@ class MovieListView(ListView):
             .annotate(count=Count("format"), average=Avg("cost"))
             .order_by("format")
         )
-        movies = Movie.objects
+        movies = Movie.objects.all()
         if request.POST.get("phrase") or (
             request.POST.get("search.x") and request.POST.get("search.y")
         ):
             phrase = request.POST.get("phrase")
             how = request.POST.get("search_by", "title")
             if how == "actors":
-                movies = movies.filter(actors__icontains=phrase)
+                movies = movies.filter(details__actors__icontains=phrase)
             elif how == "directors":
-                movies = movies.filter(directors__icontains=phrase)
+                movies = movies.filter(details__directors__icontains=phrase)
             elif how == "plot":
-                movies = movies.filter(plot__icontains=phrase)
+                movies = movies.filter(details__plot__icontains=phrase)
             else:  # Default is title
-                movies = movies.filter(title__icontains=phrase)
+                movies = movies.filter(details__title__icontains=phrase)
         if not show_ld:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
-            movies = movies.order_by(Lower("title"))
+            logger.debug("ORDER - ALPHA")
+            movies = movies.order_by(Lower("details__title"))
         elif mode == "cat_alpha":
-            movies = movies.order_by(Lower("category"), Lower("title"))
+            logger.debug("ORDER - GENRE/ALPHA")
+            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
         elif mode == "cat_date_alpha":
-            movies = movies.order_by(Lower("category"), "-release", Lower("title"))
+            logger.debug("ORDER - GENRE/DATE")
+            movies = movies.order_by(Lower("details__genre"), "-details__release", Lower("details__title"))
         elif mode == "date":
-            movies = movies.order_by("-release", "title")
+            logger.debug("ORDER - DATE")
+            movies = movies.order_by("-details__release", Lower("details__title"))
         elif mode == "collection":
+            logger.debug("ORDER - COLLECTION")
             movies = (
                 movies.exclude(collection__isnull=True)
                 .exclude(collection__exact="")
-                .order_by(Lower("collection"), "release")
+                .order_by(Lower("collection"), "details__release")
             )
         else:  # disk format
-            movies = movies.order_by(Lower("format"), Lower("title"))
+            logger.debug("ORDER - FORMAT")
+            movies = movies.order_by(Lower("format"), Lower("details__title"))
         logger.debug("POST Have %d movies with mode %s", total_movies, mode)
         initial_values = {
             "mode": mode,
@@ -98,6 +106,8 @@ class MovieListView(ListView):
             "show_details": show_details,
         }
         form = self.form_class(initial=initial_values)
+        for i in range(10):
+            logger.debug("MOVIE %d %s", i, movies[i])
         return render(
             request,
             self.template_name,
@@ -137,21 +147,21 @@ class MovieListView(ListView):
         if not show_ld:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
-            movies = movies.order_by(Lower("title"))
+            movies = movies.order_by(Lower("details__title"))
         elif mode == "cat_alpha":
-            movies = movies.order_by(Lower("category"), Lower("title"))
+            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
         elif mode == "cat_date_alpha":
-            movies = movies.order_by(Lower("category"), "-release", Lower("title"))
+            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))  # , "-details__release"
         elif mode == "date":
-            movies = movies.order_by("-release", "title")
+            movies = movies.order_by("-details__release", Lower("details__title"))
         elif mode == "collection":
             movies = (
                 movies.exclude(collection__isnull=True)
                 .exclude(collection__exact="")
-                .order_by(Lower("collection"), "release")
+                .order_by(Lower("collection"), "details__release")
             )
         else:  # disk format
-            movies = movies.order_by(Lower("format"), Lower("title"))
+            movies = movies.order_by(Lower("format"), Lower("details__title"))
         initial_values = {
             "mode": mode,
             "show_ld": show_ld,
@@ -210,6 +220,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
 
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
+        # TODO: Do I have to change %d to %s???
         logger.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
         if partial_title:
             results = search_movies(partial_title)
@@ -245,12 +256,44 @@ class MovieCreateUpdateView(
         """Create/update a movie."""
         logger.debug(
             "Create/Update POST: REQUEST %s, ARGS %s, KWARGS %s, SESSIION %s",
-            dict(request.POST),
+            request.POST.dict(),
             args,
             kwargs,
             dict(request.session),
         )
         identifier = int(kwargs.get("pk", "0"))
+        
+        # Try handling just create...
+        movie_post = {k:v for k, v in request.POST.items() if k in MovieCreateEditForm.Meta.fields}
+        details_post = {k:v for k, v in request.POST.items() if k in MovieDetailsCreateEditForm.Meta.fields}
+        logger.debug("Movie %s", movie_post)
+        logger.debug("Details %s", details_post)
+        movie_form = MovieCreateEditForm(movie_post, instance=Movie())
+        details_form = MovieDetailsCreateEditForm(details_post, instance=MovieDetails())
+        if movie_form.is_valid() and details_form.is_valid():
+            details = details_form.save()
+            movie = movie_form.save(commit=False)
+            movie.details = details
+            movie.save()
+            logger.debug("Saved movie and details")
+            return HttpResponseRedirect(self.success_url)
+        return
+        # 
+        # cforms = [ChoiceForm(request.POST, prefix=str(x), instance=Choice()) for x in range(0,3)]
+        # if pform.is_valid() and all([cf.is_valid() for cf in cforms]):
+        #     new_poll = pform.save()
+        #     for cf in cforms:
+        #         new_choice = cf.save(commit=False)
+        #         new_choice.poll = new_poll
+        #         new_choice.save()
+        #     return HttpResponseRedirect('/polls/add/')
+        # return render_to_response('add_poll.html', {'poll_form': pform, 'choice_forms': cforms})        
+        
+        
+        
+        
+        
+        
         if identifier:
             self.object = (  # pylint: disable=attribute-defined-outside-init
                 Movie.objects.get(pk=identifier)
@@ -258,6 +301,7 @@ class MovieCreateUpdateView(
         else:
             self.object = None  # pylint: disable=attribute-defined-outside-init
         logger.debug("OBJ %s", self.object)
+        return
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
@@ -269,8 +313,8 @@ class MovieCreateUpdateView(
                     "plot": "",
                     "actors": "",
                     "directors": "",
-                    "movie_id": "",
-                    "cover_ref": "",
+                    "source": "",
+                    "cover_url": "",
                 }
             )
             request.POST = post_copy
@@ -281,26 +325,24 @@ class MovieCreateUpdateView(
         """Indicates if have real movie ID."""
         return entry.startswith("tt")
 
-    def get_movie_info(self, movie_id: str, movie: Movie) -> dict:
-        """Pull IMDB info if selected."""
-        existing_IMDB = (  # pylint: disable=invalid-name
-            self.has_movie_id(movie.movie_id) if movie else False
-        )
-
-        if not existing_IMDB and self.has_movie_id(movie_id):
-            logger.debug("Looking up IMDB entry %s", movie_id)
-            results = get_movie(movie_id)
-            if results.get("Response", "Unknown") == "True":
-                logger.info("Found IMDB info")
-                return results
-            logger.error("Unable to get movie info for %s", movie_id)
+    def get_movie_info(self, movie_id: str) -> dict:
+        """Pull IMDB info if have ID."""
+        if not movie_id.startswith("tt"):
+            logger.debug("Not a valid IMDB ID: %s", movie_id)
+            return {}
+        logger.debug("Looking up IMDB entry %s", movie_id)
+        results = get_movie(movie_id)
+        if results.get("Response", "Unknown") == "True":
+            logger.info("Found IMDB info")
+            return results
+        logger.error("Unable to get movie info")
         return {}
 
     def prepare_form_and_overrides(
-        self, movie: Movie, imdb_info: dict, entered_title: str
+        self, movie: Movie, details: MovieDetails, imdb_info: dict, entered_title: str
     ):
         """Setup initial values and overrides."""
-        initial = {}
+        details_initial = {}
         overrides = {}
         suggested_genres = ""
 
@@ -311,8 +353,8 @@ class MovieCreateUpdateView(
             extract_time(imdb_info.get("Runtime")) if imdb_info.get("Runtime") else "?"
         )
         release = extract_year(imdb_info.get("Year")) if imdb_info.get("Year") else "?"
-        if not movie:  # New movie
-            initial.update(
+        if not details:  # No pre-existing details
+            details_initial.update(
                 {
                     "title": imdb_info.get("Title", entered_title),
                     "release": release,
@@ -321,51 +363,54 @@ class MovieCreateUpdateView(
                 }
             )
         else:
-            initial["category"] = movie.category.upper()
-            if rating not in ("?", movie.rating):
+            details_initial["category"] = details.genre.upper()
+            if rating not in ("?", details.rating):
                 logger.warning(
                     "Overriding existing MPAA rating %s with IMDB value %s",
-                    movie.rating,
+                    details.rating,
                     rating,
                 )
-                initial["rating"] = rating
+                details_initial["rating"] = rating
                 overrides["rating"] = True
-                overrides["rating_value"] = movie.rating
-            stored_duration = movie.duration.strftime("%H:%M")
+                overrides["rating_value"] = details.rating
+            stored_duration = details.duration.strftime("%H:%M")
             if duration not in ("?", stored_duration):
                 logger.warning(
                     "Overriding existing duration '%s' with IMDB value '%s'",
                     stored_duration,
                     duration,
                 )
-                initial["duration"] = duration
+                details_initial["duration"] = duration
                 overrides["duration"] = True
                 overrides["duration_value"] = stored_duration
-            if release not in ("?", movie.release):
+            if release not in ("?", details.release):
                 logger.warning(
                     "Overriding existing release date %s with IMDB value %s",
-                    movie.release,
+                    details.release,
                     release,
                 )
-                initial["release"] = release
+                details_initial["release"] = release
                 overrides["release"] = True
-                overrides["release_value"] = movie.release
+                overrides["release_value"] = details.release
         if imdb_info:  # New info provided
             logger.debug("Storing collected IMDB info")
-            initial.update(
+            details_initial.update(
                 {
-                    "movie_id": imdb_info.get("imdbID"),
+                    "source": imdb_info.get("imdbID"),
                     "plot": imdb_info.get("Plot", ""),
                     "actors": imdb_info.get("Actors", ""),
                     "directors": imdb_info.get("Director", ""),
-                    "cover_ref": imdb_info.get("Poster", ""),
+                    "cover_url": imdb_info.get("Poster", ""),
                 }
             )
         suggested_genres = imdb_info.get("Genre", "")
-        initial.update({"category_choices": order_genre_choices(suggested_genres)})
-        logger.debug("Initial values: %s", initial)
-        form = self.form_class(initial=initial, instance=movie)
-        return (form, overrides)
+        details_initial.update({"category_choices": order_genre_choices(suggested_genres)})
+        logger.debug("Initial values: %s", details_initial)
+        form = self.form_class(initial={}, instance=movie)
+        details_form = MovieDetailsCreateEditForm(
+            initial=details_initial, instance=details
+        )
+        return (form, details_form, overrides)
 
     def get(self, request, *args, **kwargs):
         """Show form to create/update movie."""
@@ -386,13 +431,25 @@ class MovieCreateUpdateView(
         )
 
         movie = Movie.objects.get(pk=identifier) if identifier else None
+        details = MovieDetails.find(movie_id, title)
+        imdb_info = self.get_movie_info(movie_id)
+
+        logger.debug("MOVIE: %s", movie)
+        logger.debug("DETAILS: %s", details)
+        logger.debug("IMDB: %s", imdb_info)
         self.object = movie  # pylint: disable=attribute-defined-outside-init
-        imdb_info = self.get_movie_info(movie_id, movie)
-        form, overrides = self.prepare_form_and_overrides(movie, imdb_info, title)
+        form, details_form, overrides = self.prepare_form_and_overrides(
+            movie, details, imdb_info, title
+        )
         return render(
             request,
             self.template_name,
-            {"form": form, "movie": movie, "overrides": overrides},
+            {
+                "form": form,
+                "details_form": details_form,
+                "movie": movie,
+                "overrides": overrides,
+            },
         )
 
 
@@ -413,18 +470,18 @@ class MovieLookupView(
         )
         movie = self.get_object()
         logger.debug("MOVIE: %s", movie)
-        if not movie.movie_id or movie.movie_id == "unknown":
+        if not movie.details.source or movie.details.source == "unknown":
             logger.debug("Movie does not have IMDB info")
 
             return redirect(
                 reverse("viewmaster:movie-find-results")
-                + f"?{urlencode({'title': movie.title, 'identifier': movie.id})}"
+                + f"?{urlencode({'title': movie.details.title, 'identifier': movie.id})}"
             )
 
         logger.debug("Movie already has IMDB info")
         return redirect(
             reverse("viewmaster:movie-create-update", kwargs={"pk": movie.id})
-            + f"?{urlencode({'title': movie.title, 'movie_id': movie.movie_id})}"
+            + f"?{urlencode({'title': movie.details.title, 'movie_id': movie.details.source})}"
         )
 
 
