@@ -85,7 +85,9 @@ class MovieListView(ListView):
             movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
         elif mode == "cat_date_alpha":
             logger.debug("ORDER - GENRE/DATE")
-            movies = movies.order_by(Lower("details__genre"), "-details__release", Lower("details__title"))
+            movies = movies.order_by(
+                Lower("details__genre"), "-details__release", Lower("details__title")
+            )
         elif mode == "date":
             logger.debug("ORDER - DATE")
             movies = movies.order_by("-details__release", Lower("details__title"))
@@ -106,8 +108,6 @@ class MovieListView(ListView):
             "show_details": show_details,
         }
         form = self.form_class(initial=initial_values)
-        for i in range(10):
-            logger.debug("MOVIE %d %s", i, movies[i])
         return render(
             request,
             self.template_name,
@@ -151,7 +151,9 @@ class MovieListView(ListView):
         elif mode == "cat_alpha":
             movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
         elif mode == "cat_date_alpha":
-            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))  # , "-details__release"
+            movies = movies.order_by(
+                Lower("details__genre"), "-details__release", Lower("details__title")
+            )
         elif mode == "date":
             movies = movies.order_by("-details__release", Lower("details__title"))
         elif mode == "collection":
@@ -262,10 +264,18 @@ class MovieCreateUpdateView(
             dict(request.session),
         )
         identifier = int(kwargs.get("pk", "0"))
-        
+
         # Try handling just create...
-        movie_post = {k:v for k, v in request.POST.items() if k in MovieCreateEditForm.Meta.fields}
-        details_post = {k:v for k, v in request.POST.items() if k in MovieDetailsCreateEditForm.Meta.fields}
+        movie_post = {
+            k: v
+            for k, v in request.POST.items()
+            if k in MovieCreateEditForm.Meta.fields
+        }
+        details_post = {
+            k: v
+            for k, v in request.POST.items()
+            if k in MovieDetailsCreateEditForm.Meta.fields
+        }
         logger.debug("Movie %s", movie_post)
         logger.debug("Details %s", details_post)
         movie_form = MovieCreateEditForm(movie_post, instance=Movie())
@@ -277,23 +287,21 @@ class MovieCreateUpdateView(
             movie.save()
             logger.debug("Saved movie and details")
             return HttpResponseRedirect(self.success_url)
-        return
-        # 
-        # cforms = [ChoiceForm(request.POST, prefix=str(x), instance=Choice()) for x in range(0,3)]
-        # if pform.is_valid() and all([cf.is_valid() for cf in cforms]):
-        #     new_poll = pform.save()
-        #     for cf in cforms:
-        #         new_choice = cf.save(commit=False)
-        #         new_choice.poll = new_poll
-        #         new_choice.save()
-        #     return HttpResponseRedirect('/polls/add/')
-        # return render_to_response('add_poll.html', {'poll_form': pform, 'choice_forms': cforms})        
-        
-        
-        
-        
-        
-        
+        logger.debug("Failed validation")
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": movie_form,
+                "details_form": details_form,
+                "movie": None,
+                # "overrides": overrides,
+            },
+        )
+
+
+
+
         if identifier:
             self.object = (  # pylint: disable=attribute-defined-outside-init
                 Movie.objects.get(pk=identifier)
@@ -301,7 +309,6 @@ class MovieCreateUpdateView(
         else:
             self.object = None  # pylint: disable=attribute-defined-outside-init
         logger.debug("OBJ %s", self.object)
-        return
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
@@ -404,7 +411,9 @@ class MovieCreateUpdateView(
                 }
             )
         suggested_genres = imdb_info.get("Genre", "")
-        details_initial.update({"category_choices": order_genre_choices(suggested_genres)})
+        details_initial.update(
+            {"category_choices": order_genre_choices(suggested_genres)}
+        )
         logger.debug("Initial values: %s", details_initial)
         form = self.form_class(initial={}, instance=movie)
         details_form = MovieDetailsCreateEditForm(

@@ -154,10 +154,11 @@ class Movie(models.Model):
 
     def __str__(self):
         """Show the movie entry for debug."""
+        cost = self.cost if self.cost else 0
         return (
             f"id={self.id} details={self.details} format={self.format} "
             f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
-            f"cost=${self.cost:6.2f} "
+            f"cost=${cost:6.2f} "
             f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'} "
         )
 
