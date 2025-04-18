@@ -16,13 +16,13 @@ FORMAT_CHOICES = [
 ]
 
 
-class Movie(models.Model):
-    """Movie information for the catalog."""
+class MovieDetails(models.Model):
+    """Detailed information for a movie."""
 
     title = models.CharField(max_length=60, help_text="Up to 60 characters for title.")
     release = models.IntegerField(help_text="Four digit year of release.")
-    category = models.CharField(
-        max_length=20, choices=CATEGORY_CHOICES, help_text="Select a genre"
+    genre = models.CharField(
+        max_length=20, choices=CATEGORY_CHOICES, help_text="Prominent genre."
     )
     rating = models.CharField(
         max_length=5,
@@ -31,6 +31,50 @@ class Movie(models.Model):
         help_text="Select the MPAA rating",
     )
     duration = models.TimeField(help_text="Duration in hh:mm format.")
+    plot = models.CharField(blank=True, default="", help_text="Plot summary.")
+    actors = models.CharField(blank=True, default="", help_text="Top cast.")
+    directors = models.CharField(blank=True, default="", help_text="Director(s).")
+    source = models.CharField(
+        blank=True, default="unknown", help_text="IMDB identifier, if known."
+    )
+    cover_url = models.URLField(blank=True, default="", help_text="Poster image URL.")
+
+    @property
+    def duration_str(self):
+        """Display custom format for duration."""
+        if not self.duration:
+            return "?"
+        hrs = int(self.duration.strftime("%H"))
+        mins = int(self.duration.strftime("%M"))
+        return f"{hrs}h {mins}m"
+
+    def __str__(self):
+        """Show the movie entry for debug."""
+        return (
+            f"title='{self.title}' ({self.id}) plot='{self.plot}' actors='{self.actors}' "
+            f"directors='{self.directors}' cat={self.genre} release={self.release} "
+            f"rating={self.rating} duration={self.duration_str} "
+            f"imdb_id={self.source} cover_url={self.cover_url}"
+        )
+
+
+class Movie(models.Model):
+    """Movie information for the catalog."""
+
+    title = models.CharField(
+        max_length=60, null=True, help_text="Up to 60 characters for title."
+    )
+    release = models.IntegerField(null=True, help_text="Four digit year of release.")
+    category = models.CharField(
+        max_length=20, null=True, choices=CATEGORY_CHOICES, help_text="Select a genre"
+    )
+    rating = models.CharField(
+        max_length=5,
+        default="?",
+        choices=RATING_CHOICES,
+        help_text="Select the MPAA rating",
+    )
+    duration = models.TimeField(null=True, help_text="Duration in hh:mm format.")
     format = models.CharField(
         max_length=3, choices=FORMAT_CHOICES, help_text="Select media format"
     )
@@ -54,7 +98,7 @@ class Movie(models.Model):
         default=False,
         help_text="Indicates that movie is not playable, or has playback issues.",
     )
-    # New fields...
+
     plot = models.CharField(blank=True, default="", help_text="Plot summary (imported)")
     actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
     directors = models.CharField(
@@ -66,6 +110,7 @@ class Movie(models.Model):
     movie_id = models.CharField(
         blank=True, default="unknown", help_text="IMDB movie ID (imported)"
     )
+    details = models.ForeignKey(MovieDetails, null=True, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         """Link used when updating movie?"""
@@ -121,4 +166,5 @@ class Movie(models.Model):
         )
 
 
+auditlog.register(MovieDetails)
 auditlog.register(Movie)
