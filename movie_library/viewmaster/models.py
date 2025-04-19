@@ -39,6 +39,11 @@ class MovieDetails(models.Model):
     )
     cover_url = models.URLField(blank=True, default="", help_text="Poster image URL.")
 
+    class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
+        # Title will be unique, except in case where there is a re-make of movie.
+        # May have multiple movies with "unknown" IMDB ID.
+        unique_together = ("title", "source")
+
     @classmethod
     def find(cls, imdb_id: str, title: str = ""):
         """Lookup details by IMDB ID."""
