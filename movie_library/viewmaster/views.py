@@ -77,31 +77,31 @@ class MovieListView(ListView):
                 movies = movies.filter(details__title__icontains=phrase)
         if not show_ld:
             movies = movies.exclude(format="LD")
-        if mode == "alpha":
-            logger.debug("ORDER - ALPHA")
-            movies = movies.order_by(Lower("details__title"))
-        elif mode == "cat_alpha":
-            logger.debug("ORDER - GENRE/ALPHA")
-            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
-        elif mode == "cat_date_alpha":
-            logger.debug("ORDER - GENRE/DATE")
-            movies = movies.order_by(
-                Lower("details__genre"), "-details__release", Lower("details__title")
-            )
-        elif mode == "date":
-            logger.debug("ORDER - DATE")
-            movies = movies.order_by("-details__release", Lower("details__title"))
-        elif mode == "collection":
-            logger.debug("ORDER - COLLECTION")
-            movies = (
-                movies.exclude(collection__isnull=True)
-                .exclude(collection__exact="")
-                .order_by(Lower("collection"), "details__release")
-            )
-        else:  # disk format
-            logger.debug("ORDER - FORMAT")
-            movies = movies.order_by(Lower("format"), Lower("details__title"))
-        logger.debug("POST Have %d movies with mode %s", total_movies, mode)
+        logger.info("Mode: %s", mode)
+        match mode:
+            case "alpha":
+                movies = movies.order_by(Lower("details__title"))
+            case "cat_alpha":
+                movies = movies.order_by(
+                    Lower("details__genre"), Lower("details__title")
+                )
+            case "cat_date_alpha":
+                movies = movies.order_by(
+                    Lower("details__genre"),
+                    "-details__release",
+                    Lower("details__title"),
+                )
+            case "date":
+                movies = movies.order_by("-details__release", Lower("details__title"))
+            case "collection":
+                movies = (
+                    movies.exclude(collection__isnull=True)
+                    .exclude(collection__exact="")
+                    .order_by(Lower("collection"), "details__release")
+                )
+            case _:  # disk format
+                movies = movies.order_by(Lower("format"), Lower("details__title"))
+        logger.debug("POST Have %d movies", movies.count())
         initial_values = {
             "mode": mode,
             "show_ld": show_ld,
@@ -146,24 +146,29 @@ class MovieListView(ListView):
         movies = Movie.objects
         if not show_ld:
             movies = movies.exclude(format="LD")
-        if mode == "alpha":
-            movies = movies.order_by(Lower("details__title"))
-        elif mode == "cat_alpha":
-            movies = movies.order_by(Lower("details__genre"), Lower("details__title"))
-        elif mode == "cat_date_alpha":
-            movies = movies.order_by(
-                Lower("details__genre"), "-details__release", Lower("details__title")
-            )
-        elif mode == "date":
-            movies = movies.order_by("-details__release", Lower("details__title"))
-        elif mode == "collection":
-            movies = (
-                movies.exclude(collection__isnull=True)
-                .exclude(collection__exact="")
-                .order_by(Lower("collection"), "details__release")
-            )
-        else:  # disk format
-            movies = movies.order_by(Lower("format"), Lower("details__title"))
+        match mode:
+            case "alpha":
+                movies = movies.order_by(Lower("details__title"))
+            case "cat_alpha":
+                movies = movies.order_by(
+                    Lower("details__genre"), Lower("details__title")
+                )
+            case "cat_date_alpha":
+                movies = movies.order_by(
+                    Lower("details__genre"),
+                    "-details__release",
+                    Lower("details__title"),
+                )
+            case "date":
+                movies = movies.order_by("-details__release", Lower("details__title"))
+            case "collection":
+                movies = (
+                    movies.exclude(collection__isnull=True)
+                    .exclude(collection__exact="")
+                    .order_by(Lower("collection"), "details__release")
+                )
+            case _:  # disk format
+                movies = movies.order_by(Lower("format"), Lower("details__title"))
         initial_values = {
             "mode": mode,
             "show_ld": show_ld,
@@ -264,8 +269,15 @@ class MovieCreateUpdateView(
             dict(request.session),
         )
         identifier = int(kwargs.get("pk", "0"))
+        movie_id = request.GET.get("movie_id") or "unknown"
+        title = request.GET.get("title") or "TITLE NOT FOUND"
+        movie = Movie.find(identifier)
+        details = MovieDetails.find(movie_id, title)
 
-        # Try handling just create...
+        logger.debug("MOVIE: %s", movie)
+        logger.debug("DETAILS: %s", details)
+
+        # Set fields for each model
         movie_post = {
             k: v
             for k, v in request.POST.items()
@@ -276,15 +288,15 @@ class MovieCreateUpdateView(
             for k, v in request.POST.items()
             if k in MovieDetailsCreateEditForm.Meta.fields
         }
-        logger.debug("Movie %s", movie_post)
-        logger.debug("Details %s", details_post)
-        movie_form = MovieCreateEditForm(movie_post, instance=Movie())
-        details_form = MovieDetailsCreateEditForm(details_post, instance=MovieDetails())
+        logger.debug("Movie params: %s", movie_post)
+        logger.debug("Details params: %s", details_post)
+        movie_form = MovieCreateEditForm(movie_post, instance=movie)
+        details_form = MovieDetailsCreateEditForm(details_post, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
-            details = details_form.save()
-            movie = movie_form.save(commit=False)
-            movie.details = details
-            movie.save()
+            saved_details = details_form.save()
+            saved_movie = movie_form.save(commit=False)
+            saved_movie.details = saved_details
+            saved_movie.save()
             logger.debug("Saved movie and details")
             return HttpResponseRedirect(self.success_url)
         logger.debug("Failed validation")
@@ -299,16 +311,6 @@ class MovieCreateUpdateView(
             },
         )
 
-
-
-
-        if identifier:
-            self.object = (  # pylint: disable=attribute-defined-outside-init
-                Movie.objects.get(pk=identifier)
-            )
-        else:
-            self.object = None  # pylint: disable=attribute-defined-outside-init
-        logger.debug("OBJ %s", self.object)
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
@@ -430,7 +432,7 @@ class MovieCreateUpdateView(
             kwargs,
         )
         movie_id = request.GET.get("movie_id") or "unknown"
-        title = request.GET.get("title") or ""
+        title = request.GET.get("title") or "TITLE NOT FOUND"
         identifier = int(kwargs.get("pk", 0))
         logger.debug(
             "MovieID: %s, Title: %s, identifier: %d",
@@ -524,8 +526,14 @@ class MovieDeleteView(
             args,
             kwargs,
         )
-        self.success_url = reverse("viewmaster:movie-list")
-        return super().post(request, *args, **kwargs)
+        movie = self.get_object()
+        details = movie.details
+        movie.delete()
+        if details.unused():
+            logger.info("Deleting details as not used by other movies")
+            details.delete()
+        success_url = reverse("viewmaster:movie-list")
+        return HttpResponseRedirect(success_url)
 
 
 class MovieClearView(

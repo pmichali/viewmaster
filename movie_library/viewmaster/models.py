@@ -44,13 +44,17 @@ class MovieDetails(models.Model):
         # May have multiple movies with "unknown" IMDB ID.
         unique_together = ("title", "source")
 
+    def unused(self):
+        """Indicate if this movie details is not used any more."""
+        return Movie.objects.filter(details=self).count() == 0
+
     @classmethod
-    def find(cls, imdb_id: str, title: str = ""):
+    def find(cls, imdb_id: str, title: str):
         """Lookup details by IMDB ID."""
         try:
-            return cls.objects.get(source=imdb_id)
+            return cls.objects.get(source=imdb_id, title=title)
         except cls.DoesNotExist:
-            return cls.objects.filter(title=title).first()
+            return None
 
     @property
     def duration_str(self):
@@ -156,6 +160,14 @@ class Movie(models.Model):
     def format_order(self):
         """Code indicating the disk format order."""
         return self.format.upper()
+
+    @classmethod
+    def find(cls, identifier):
+        """Get movie by ID."""
+        try:
+            return cls.objects.get(pk=identifier)
+        except cls.DoesNotExist:
+            return None
 
     def __str__(self):
         """Show the movie entry for debug."""
