@@ -97,7 +97,9 @@ class MovieListView(ListView):
                 movies = (
                     movies.exclude(collection__isnull=True)
                     .exclude(collection__exact="")
-                    .order_by(Lower("collection"), "details__release", Lower("details__title"))
+                    .order_by(
+                        Lower("collection"), "details__release", Lower("details__title")
+                    )
                 )
             case _:  # disk format
                 movies = movies.order_by(Lower("format"), Lower("details__title"))
@@ -165,7 +167,9 @@ class MovieListView(ListView):
                 movies = (
                     movies.exclude(collection__isnull=True)
                     .exclude(collection__exact="")
-                    .order_by(Lower("collection"), "details__release", Lower("details__title"))
+                    .order_by(
+                        Lower("collection"), "details__release", Lower("details__title")
+                    )
                 )
             case _:  # disk format
                 movies = movies.order_by(Lower("format"), Lower("details__title"))
@@ -294,9 +298,7 @@ class MovieCreateUpdateView(
         if movie:
             logger.debug("Existing movie - edit")
             if movie.altering_shared_details(details_post):
-                logger.debug(
-                    "Changing details that are shared by other movies"
-                )
+                logger.debug("Changing details that are shared by other movies")
                 details = None  # Create new details
         movie_form = MovieCreateEditForm(movie_post, instance=movie)
         details_form = MovieDetailsCreateEditForm(details_post, instance=details)
@@ -378,7 +380,7 @@ class MovieCreateUpdateView(
                 }
             )
         else:
-            details_initial["category"] = details.genre.upper()
+            details_initial["genre"] = details.genre.upper()
             if rating not in ("?", details.rating):
                 logger.warning(
                     "Overriding existing MPAA rating %s with IMDB value %s",

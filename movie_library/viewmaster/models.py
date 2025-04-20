@@ -135,8 +135,8 @@ class Movie(models.Model):
 
     def altering_shared_details(self, new_details: dict):
         """
-            Indicates that movie is changing title/IMDB # for details
-            that are shared by other movies.
+        Indicates that movie is changing title/IMDB # for details
+        that are shared by other movies.
         """
         if self.details.use_count() < 2:
             return False
