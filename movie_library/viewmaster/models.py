@@ -44,9 +44,9 @@ class MovieDetails(models.Model):
         # May have multiple movies with "unknown" IMDB ID.
         unique_together = ("title", "source")
 
-    def unused(self):
-        """Indicate if this movie details is not used any more."""
-        return Movie.objects.filter(details=self).count() == 0
+    def use_count(self):
+        """Indicate number of movies sharing these details (0+)."""
+        return Movie.objects.filter(details=self).count()
 
     @classmethod
     def find(cls, imdb_id: str, title: str):
@@ -132,6 +132,20 @@ class Movie(models.Model):
     def get_absolute_url(self):
         """Link used when updating movie?"""
         return reverse("viewmaster:movie-update", args=[self.id])
+
+    def altering_shared_details(self, new_details: dict):
+        """
+            Indicates that movie is changing title/IMDB # for details
+            that are shared by other movies.
+        """
+        if self.details.use_count() < 2:
+            return False
+        if (
+            new_details.get("title") != self.details.title
+            or new_details.get("source") != self.details.source
+        ):
+            return True
+        return False
 
     @property
     def alpha_order(self):

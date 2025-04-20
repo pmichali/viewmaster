@@ -97,7 +97,7 @@ class MovieListView(ListView):
                 movies = (
                     movies.exclude(collection__isnull=True)
                     .exclude(collection__exact="")
-                    .order_by(Lower("collection"), "details__release")
+                    .order_by(Lower("collection"), "details__release", Lower("details__title"))
                 )
             case _:  # disk format
                 movies = movies.order_by(Lower("format"), Lower("details__title"))
@@ -165,7 +165,7 @@ class MovieListView(ListView):
                 movies = (
                     movies.exclude(collection__isnull=True)
                     .exclude(collection__exact="")
-                    .order_by(Lower("collection"), "details__release")
+                    .order_by(Lower("collection"), "details__release", Lower("details__title"))
                 )
             case _:  # disk format
                 movies = movies.order_by(Lower("format"), Lower("details__title"))
@@ -290,6 +290,14 @@ class MovieCreateUpdateView(
         }
         logger.debug("Movie params: %s", movie_post)
         logger.debug("Details params: %s", details_post)
+
+        if movie:
+            logger.debug("Existing movie - edit")
+            if movie.altering_shared_details(details_post):
+                logger.debug(
+                    "Changing details that are shared by other movies"
+                )
+                details = None  # Create new details
         movie_form = MovieCreateEditForm(movie_post, instance=movie)
         details_form = MovieDetailsCreateEditForm(details_post, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
@@ -310,7 +318,7 @@ class MovieCreateUpdateView(
                 # "overrides": overrides,
             },
         )
-
+        # DO THIS....
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
@@ -327,8 +335,6 @@ class MovieCreateUpdateView(
                 }
             )
             request.POST = post_copy
-        self.success_url = reverse("viewmaster:movie-list")
-        return super().post(request, *args, **kwargs)
 
     def has_movie_id(self, entry: str) -> bool:
         """Indicates if have real movie ID."""
@@ -529,8 +535,8 @@ class MovieDeleteView(
         movie = self.get_object()
         details = movie.details
         movie.delete()
-        if details.unused():
-            logger.info("Deleting details as not used by other movies")
+        if details.use_count() == 0:
+            logger.info("Deleting details as not used any movies now")
             details.delete()
         success_url = reverse("viewmaster:movie-list")
         return HttpResponseRedirect(success_url)
