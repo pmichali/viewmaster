@@ -22,7 +22,7 @@ from django.views.generic.edit import (
 from .api import get_movie, search_movies
 from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
 from .models import Movie, MovieDetails
-from .forms import MovieClearForm, MovieCreateEditForm, MovieDetailsCreateEditForm
+from .forms import MovieCreateEditForm, MovieDetailsCreateEditForm
 from .forms import MovieFindForm, MovieListForm
 
 
@@ -232,7 +232,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
         # TODO: Do I have to change %d to %s???
-        logger.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
+        logger.debug("looking for candidates for '%s' (%s)", partial_title, existing_id)
         if partial_title:
             results = search_movies(partial_title)
             success = results.get("Response", "Missing")
@@ -276,7 +276,10 @@ class MovieCreateUpdateView(
         movie_id = request.GET.get("movie_id") or "unknown"
         title = request.GET.get("title") or "TITLE NOT FOUND"
         movie = Movie.find(identifier)
-        details = MovieDetails.find(movie_id, title)
+        if movie:
+            details = movie.details
+        else:
+            details = MovieDetails.find(movie_id, title)
 
         logger.debug("MOVIE: %s", movie)
         logger.debug("DETAILS: %s", details)
@@ -294,6 +297,22 @@ class MovieCreateUpdateView(
         }
         logger.debug("Movie params: %s", movie_post)
         logger.debug("Details params: %s", details_post)
+
+        if "save_and_clear" in request.POST:
+            self.success_url = reverse(
+                "viewmaster:movie-clear", kwargs={"pk": identifier}
+            )
+            logger.debug("Saving and will then clear IMDB info")
+            details_post.update(
+                {
+                    "plot": "",
+                    "actors": "",
+                    "directors": "",
+                    "source": "unknown",
+                    "cover_url": "",
+                }
+            )
+            logger.debug("Revised details: %s", details_post)
 
         if movie:
             logger.debug("Existing movie - edit")
@@ -320,23 +339,6 @@ class MovieCreateUpdateView(
                 # "overrides": overrides,
             },
         )
-        # DO THIS....
-        if "save_and_clear" in request.POST:
-            self.success_url = reverse(
-                "viewmaster:movie-clear", kwargs={"pk": identifier}
-            )
-            logger.debug("Saving and will then clear IMDB info")
-            post_copy = request.POST.copy()
-            post_copy.update(
-                {
-                    "plot": "",
-                    "actors": "",
-                    "directors": "",
-                    "source": "",
-                    "cover_url": "",
-                }
-            )
-            request.POST = post_copy
 
     def has_movie_id(self, entry: str) -> bool:
         """Indicates if have real movie ID."""
@@ -450,7 +452,10 @@ class MovieCreateUpdateView(
         )
 
         movie = Movie.objects.get(pk=identifier) if identifier else None
-        details = MovieDetails.find(movie_id, title)
+        if movie:
+            details = movie.details
+        else:
+            details = MovieDetails.find(movie_id, title)
         imdb_info = self.get_movie_info(movie_id)
 
         logger.debug("MOVIE: %s", movie)
@@ -545,45 +550,17 @@ class MovieDeleteView(
 
 
 class MovieClearView(
-    LoginRequiredMixin, UpdateView
+    LoginRequiredMixin, View
 ):  # pylint: disable=too-many-ancestors
     """View for confirming the clearing of IMDB info."""
 
     model = Movie
-    form_class = MovieClearForm
     template_name = "viewmaster/clear_imdb.html"
-    success_url = reverse_lazy("viewmaster:movie-list")
-
-    def post(self, request, *args, **kwargs):
-        """Clear movie's IDMB info."""
-        logger.debug(
-            "POST: REQUEST %s, ARGS %s, KWARGS %s", dict(request.POST), args, kwargs
-        )
-        if "clear_and_find" in request.POST:
-            identifier = int(kwargs.get("pk", "0"))
-            movie = Movie.objects.get(pk=identifier)
-            self.success_url = (
-                reverse("viewmaster:movie-find-results")
-                + f"?{urlencode({'title': movie.title, 'identifier': movie.id})}"
-            )
-            logger.debug("Clear and then find using '%s'", self.success_url)
-        else:
-            logger.debug("Clearing")
-        return super().post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        """Show confirmation form to clear IMDB info."""
         logger.debug(
-            "GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
+            "CLEAR GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
         identifier = int(kwargs.get("pk", "0"))
         movie = Movie.objects.get(pk=identifier)
-        logger.debug("Movie to clear %s (%d)", movie, identifier)
-        movie.movie_id = "unknown"
-        movie.plot = ""
-        movie.actors = ""
-        movie.directors = ""
-        movie.cover_ref = ""
-        self.object = movie  # pylint: disable=attribute-defined-outside-init
-        form = self.form_class(initial={}, instance=movie)
-        return render(request, self.template_name, {"form": form, "movie": movie})
+        return render(request, self.template_name, {"movie": movie})

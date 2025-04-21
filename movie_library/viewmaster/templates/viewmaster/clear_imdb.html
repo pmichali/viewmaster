@@ -2,31 +2,28 @@
 
 {% block content %}
 
-<h1>Clear Movie IMDB info</h1>
+<h1>Saved and Cleared Movie IMDB Info</h1>
 
 <p>
-  With movie '{{ movie.title }}' (ID={{movie.id}}) released in {{ movie.release }}
-  enter your choice for IMDB info...
+  Saved movie '{{ movie.details.title }}' (ID={{movie.id}}) and cleared IMDB details.
 </p>
-
-<form action="" method="POST">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" name="clear" class="btn btn-primary">Clear</button>
-  <button type="submit" name="clear_and_find" class="btn btn-primary">Clear and find IMDB info</button>
-  <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
-  <button id="cancelBtn" class="btn btn-info">Cancel</button>
-</form>
+<p>
+  <button id="doneBtn" class="btn btn-info">Done</button>
+  <button id="findBtn" class="btn btn-primary">Find IMDB info</button>
+</p>
 
 {% endblock %}
 
-
 {% block javascript %}
-<script>
-// Redirect to list, without submitting form and deleting
-document.getElementById("cancelBtn").onclick = function () {
-    window.location.href = "{% url 'viewmaster:movie-list' %}";
-    return false;  // So that form is not submitted and form URL is not used
-}
-</script>
+  <script>
+    // Redirect DELETE to a confirmation page
+    document.getElementById("findBtn").onclick = function () {
+        window.location.href = "{% url 'viewmaster:movie-lookup' movie.id %}";
+        return false;  // So that form is not submitted and form URL used
+    }
+    document.getElementById("doneBtn").onclick = function () {
+        window.location.href = "{% url 'viewmaster:movie-list' %}";
+        return false;  // So that form is not submitted and form URL used
+    }
+  </script>
 {% endblock %}

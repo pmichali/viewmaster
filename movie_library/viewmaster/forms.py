@@ -182,21 +182,3 @@ class MovieCreateEditForm(ModelForm):
         if cost < 0:
             raise ValidationError("Cost must be a positive amount")
         return cost
-
-
-class MovieClearForm(ModelForm):
-    """Model based form for clearing movie IMDB info."""
-
-    class Meta:  # pylint: disable=too-few-public-methods
-        """Model and fields for form."""
-
-        model = MovieDetails
-        fields = ["plot", "actors", "directors", "source", "cover_url"]
-
-        widgets = {
-            "plot": HiddenInput(),
-            "actors": HiddenInput(),
-            "directors": HiddenInput(),
-            "source": HiddenInput(),
-            "cover_url": HiddenInput(),
-        }
