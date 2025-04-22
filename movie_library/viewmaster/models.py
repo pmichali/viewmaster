@@ -49,10 +49,13 @@ class MovieDetails(models.Model):
         return Movie.objects.filter(details=self).count()
 
     @classmethod
-    def find(cls, imdb_id: str, title: str):
-        """Lookup details by IMDB ID."""
+    def find(cls, source: str, title: str, existing_details=None):
+        """Find existing details matching source and title, ignoring if currently used by movie."""
         try:
-            return cls.objects.get(source=imdb_id, title=title)
+            details = MovieDetails.objects.filter(source=source, title=title)
+            if existing_details:
+                details = details.exclude(id=existing_details.id)
+            return details.get()
         except cls.DoesNotExist:
             return None
 
@@ -133,19 +136,14 @@ class Movie(models.Model):
         """Link used when updating movie?"""
         return reverse("viewmaster:movie-update", args=[self.id])
 
-    def altering_shared_details(self, new_details: dict):
-        """
-        Indicates that movie is changing title/IMDB # for details
-        that are shared by other movies.
-        """
-        if self.details.use_count() < 2:
-            return False
-        if (
-            new_details.get("title") != self.details.title
-            or new_details.get("source") != self.details.source
-        ):
-            return True
-        return False
+    def details_shared(self):
+        """Indicates if the details are shared by other movies."""
+        count = (
+            Movie.objects.filter(details__id=self.details.id)
+            .exclude(id=self.id)
+            .count()
+        )
+        return count > 0
 
     @property
     def alpha_order(self):
@@ -186,8 +184,9 @@ class Movie(models.Model):
     def __str__(self):
         """Show the movie entry for debug."""
         cost = self.cost if self.cost else 0
+        details_id = self.details.id if self.details else "?"
         return (
-            f"id={self.id} details={self.details} format={self.format} "
+            f"id={self.id} details_id={details_id} format={self.format} "
             f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
             f"cost=${cost:6.2f} "
             f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'} "

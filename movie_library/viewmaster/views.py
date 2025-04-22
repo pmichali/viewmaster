@@ -266,25 +266,16 @@ class MovieCreateUpdateView(
     def post(self, request, *args, **kwargs):
         """Create/update a movie."""
         logger.debug(
-            "Create/Update POST: REQUEST %s, ARGS %s, KWARGS %s, SESSIION %s",
+            "Create/Update POST: POSTARGS %s, GETARGS %s, ARGS %s, KWARGS %s, SESSIION %s",
             request.POST.dict(),
+            request.GET.dict(),
             args,
             kwargs,
             dict(request.session),
         )
+
         identifier = int(kwargs.get("pk", "0"))
-        movie_id = request.GET.get("movie_id") or "unknown"
-        title = request.GET.get("title") or "TITLE NOT FOUND"
-        movie = Movie.find(identifier)
-        if movie:
-            details = movie.details
-        else:
-            details = MovieDetails.find(movie_id, title)
-
-        logger.debug("MOVIE: %s", movie)
-        logger.debug("DETAILS: %s", details)
-
-        # Set fields for each model
+        # Get the changes being made for each model
         movie_post = {
             k: v
             for k, v in request.POST.items()
@@ -302,7 +293,7 @@ class MovieCreateUpdateView(
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
             )
-            logger.debug("Saving and will then clear IMDB info")
+            logger.debug("Ensuring all details clear, for save/clear operation")
             details_post.update(
                 {
                     "plot": "",
@@ -314,11 +305,44 @@ class MovieCreateUpdateView(
             )
             logger.debug("Revised details: %s", details_post)
 
-        if movie:
-            logger.debug("Existing movie - edit")
-            if movie.altering_shared_details(details_post):
-                logger.debug("Changing details that are shared by other movies")
-                details = None  # Create new details
+        source = details_post.get("source", request.POST.get("source", "unknown"))
+        title = details_post.get("title", request.POST.get("title", "MISSING TITLE!"))
+        logger.info("Target source %s, target title '%s'", source, title)
+        movie = Movie.find(identifier)
+        details_to_delete = None
+        if not movie:
+            logger.info("Creating new movie")
+            details = MovieDetails.find(source, title)
+        else:  # Editing a movie
+            logger.info("Editing existing movie ID: %d", movie.id)
+            details = movie.details
+
+            details_to_use = MovieDetails.find(source, title)
+            logger.debug("EXISTING DETAILS %s", details)
+            logger.debug("DETAILS TO USE %s", details_to_use)
+
+            logger.info(
+                "Movie will %sbe sharing existing details",
+                "not " if details_to_use is None else "",
+            )
+            if movie.details_shared():
+                logger.debug("Details are currently being shared")
+                if details_to_use:
+                    if details_to_use.id == details.id:
+                        which = "same shared"
+                    else:
+                        which = "different shared"
+                else:
+                    which = "new"
+                logger.debug("Using %s details", which)
+                details = details_to_use
+            elif details_to_use:
+                logger.debug("Switching from non-shared to shared details")
+                details_to_delete = details
+                details = details_to_use
+            else:
+                logger.debug("Altering (unshared) details")
+
         movie_form = MovieCreateEditForm(movie_post, instance=movie)
         details_form = MovieDetailsCreateEditForm(details_post, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
@@ -327,6 +351,9 @@ class MovieCreateUpdateView(
             saved_movie.details = saved_details
             saved_movie.save()
             logger.debug("Saved movie and details")
+            if details_to_delete:
+                logger.debug("Deleting old details %s", details_to_delete)
+                details_to_delete.delete()
             return HttpResponseRedirect(self.success_url)
         logger.debug("Failed validation")
         return render(
@@ -549,9 +576,7 @@ class MovieDeleteView(
         return HttpResponseRedirect(success_url)
 
 
-class MovieClearView(
-    LoginRequiredMixin, View
-):  # pylint: disable=too-many-ancestors
+class MovieClearView(LoginRequiredMixin, View):  # pylint: disable=too-many-ancestors
     """View for confirming the clearing of IMDB info."""
 
     model = Movie
