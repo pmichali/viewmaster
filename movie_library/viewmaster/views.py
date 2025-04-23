@@ -308,17 +308,11 @@ class MovieCreateUpdateView(
         else:  # Editing a movie
             logger.info("Editing existing movie ID: %d", movie.id)
             details = movie.details
-
-            details_to_use = MovieDetails.find(source, title)
             logger.debug("EXISTING DETAILS %s", details)
-            logger.debug("DETAILS TO USE %s", details_to_use)
 
-            logger.info(
-                "Movie will %sbe sharing existing details",
-                "not " if details_to_use is None else "",
-            )
             if movie.details_shared():
                 logger.debug("Details are currently being shared")
+                details_to_use = MovieDetails.find(source, title)
                 if details_to_use:
                     if details_to_use.id == details.id:
                         which = "same shared"
@@ -328,12 +322,17 @@ class MovieCreateUpdateView(
                     which = "new"
                 logger.debug("Using %s details", which)
                 details = details_to_use
-            elif details_to_use:
-                logger.debug("Switching from non-shared to shared details")
-                details_to_delete = details
-                details = details_to_use
-            else:
-                logger.debug("Altering (unshared) details")
+            else:  # Not shared
+                details_to_use = MovieDetails.find(source, title, details)
+                if details_to_use:
+                    logger.debug(
+                        "Switching from non-shared to shared details (delete old)"
+                    )
+                    details_to_delete = details
+                    details = details_to_use
+                else:
+                    logger.debug("Altering (unshared) details")
+        logger.debug("TARGET DETAILS %s", details)
         return (details, details_to_delete)
 
     def save_movie_and_details(self, movie_form, details_form):

@@ -81,20 +81,6 @@ class MovieDetails(models.Model):
 class Movie(models.Model):
     """Movie information for the catalog."""
 
-    title = models.CharField(
-        max_length=60, null=True, help_text="Up to 60 characters for title."
-    )
-    release = models.IntegerField(null=True, help_text="Four digit year of release.")
-    category = models.CharField(
-        max_length=20, null=True, choices=CATEGORY_CHOICES, help_text="Select a genre"
-    )
-    rating = models.CharField(
-        max_length=5,
-        default="?",
-        choices=RATING_CHOICES,
-        help_text="Select the MPAA rating",
-    )
-    duration = models.TimeField(null=True, help_text="Duration in hh:mm format.")
     format = models.CharField(
         max_length=3, choices=FORMAT_CHOICES, help_text="Select media format"
     )
@@ -119,17 +105,6 @@ class Movie(models.Model):
         help_text="Indicates that movie is not playable, or has playback issues.",
     )
 
-    plot = models.CharField(blank=True, default="", help_text="Plot summary (imported)")
-    actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
-    directors = models.CharField(
-        blank=True, default="", help_text="Director(s) (imported)"
-    )
-    cover_ref = models.URLField(
-        blank=True, default="", help_text="URL where poster image is located (imported)"
-    )
-    movie_id = models.CharField(
-        blank=True, default="unknown", help_text="IMDB movie ID (imported)"
-    )
     details = models.ForeignKey(MovieDetails, null=True, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
