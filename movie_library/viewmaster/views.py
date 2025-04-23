@@ -231,7 +231,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
 
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
-        # TODO: Do I have to change %d to %s???
         logger.debug("looking for candidates for '%s' (%s)", partial_title, existing_id)
         if partial_title:
             results = search_movies(partial_title)
@@ -263,38 +262,27 @@ class MovieCreateUpdateView(
     form_class = MovieCreateEditForm
     success_url = reverse_lazy("viewmaster:movie-list")
 
-    def post(self, request, *args, **kwargs):
-        """Create/update a movie."""
-        logger.debug(
-            "Create/Update POST: POSTARGS %s, GETARGS %s, ARGS %s, KWARGS %s, SESSIION %s",
-            request.POST.dict(),
-            request.GET.dict(),
-            args,
-            kwargs,
-            dict(request.session),
-        )
-
-        identifier = int(kwargs.get("pk", "0"))
-        # Get the changes being made for each model
-        movie_post = {
+    def collect_changes(self, request, identifier):
+        """Gather all the changes for each model."""
+        movie_changes = {
             k: v
             for k, v in request.POST.items()
             if k in MovieCreateEditForm.Meta.fields
         }
-        details_post = {
+        details_changes = {
             k: v
             for k, v in request.POST.items()
             if k in MovieDetailsCreateEditForm.Meta.fields
         }
-        logger.debug("Movie params: %s", movie_post)
-        logger.debug("Details params: %s", details_post)
+        logger.debug("Movie params: %s", movie_changes)
+        logger.debug("Details params: %s", details_changes)
 
         if "save_and_clear" in request.POST:
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
             )
             logger.debug("Ensuring all details clear, for save/clear operation")
-            details_post.update(
+            details_changes.update(
                 {
                     "plot": "",
                     "actors": "",
@@ -303,12 +291,16 @@ class MovieCreateUpdateView(
                     "cover_url": "",
                 }
             )
-            logger.debug("Revised details: %s", details_post)
+            logger.debug("Revised details: %s", details_changes)
+        return (movie_changes, details_changes)
 
-        source = details_post.get("source", request.POST.get("source", "unknown"))
-        title = details_post.get("title", request.POST.get("title", "MISSING TITLE!"))
-        logger.info("Target source %s, target title '%s'", source, title)
-        movie = Movie.find(identifier)
+    def get_details_to_change(self, movie, source, title):
+        """Determine details to be updated.
+
+        Can be for this movie, existing "shared" details, or None (meaning
+        new details will be created from request data). If we are switching
+        from unshared to shared details, we will note the old details to
+        delete."""
         details_to_delete = None
         if not movie:
             logger.info("Creating new movie")
@@ -342,15 +334,42 @@ class MovieCreateUpdateView(
                 details = details_to_use
             else:
                 logger.debug("Altering (unshared) details")
+        return (details, details_to_delete)
 
-        movie_form = MovieCreateEditForm(movie_post, instance=movie)
-        details_form = MovieDetailsCreateEditForm(details_post, instance=details)
+    def save_movie_and_details(self, movie_form, details_form):
+        """Save movie and details."""
+        saved_details = details_form.save()
+        saved_movie = movie_form.save(commit=False)
+        saved_movie.details = saved_details
+        saved_movie.save()
+        logger.debug("Saved movie and details")
+
+    def post(self, request, *args, **kwargs):
+        """Create/update a movie."""
+        logger.debug(
+            "Create/Update POST: POSTARGS %s, GETARGS %s, ARGS %s, KWARGS %s, SESSIION %s",
+            request.POST.dict(),
+            request.GET.dict(),
+            args,
+            kwargs,
+            dict(request.session),
+        )
+
+        identifier = int(kwargs.get("pk", "0"))
+        movie_changes, details_changes = self.collect_changes(request, identifier)
+
+        source = details_changes.get("source", request.POST.get("source", "unknown"))
+        title = details_changes.get(
+            "title", request.POST.get("title", "MISSING TITLE!")
+        )
+        logger.info("Target source %s, target title '%s'", source, title)
+        movie = Movie.find(identifier)
+        details, details_to_delete = self.get_details_to_change(movie, source, title)
+        # Apply the changes
+        movie_form = MovieCreateEditForm(movie_changes, instance=movie)
+        details_form = MovieDetailsCreateEditForm(details_changes, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
-            saved_details = details_form.save()
-            saved_movie = movie_form.save(commit=False)
-            saved_movie.details = saved_details
-            saved_movie.save()
-            logger.debug("Saved movie and details")
+            self.save_movie_and_details(movie_form, details_form)
             if details_to_delete:
                 logger.debug("Deleting old details %s", details_to_delete)
                 details_to_delete.delete()
@@ -363,7 +382,6 @@ class MovieCreateUpdateView(
                 "form": movie_form,
                 "details_form": details_form,
                 "movie": None,
-                # "overrides": overrides,
             },
         )
 
@@ -583,6 +601,7 @@ class MovieClearView(LoginRequiredMixin, View):  # pylint: disable=too-many-ance
     template_name = "viewmaster/clear_imdb.html"
 
     def get(self, request, *args, **kwargs):
+        """Show choices after save and clear movie."""
         logger.debug(
             "CLEAR GET: REQUEST %s, ARGS %s, KWARGS %s", dict(request.GET), args, kwargs
         )
