@@ -385,17 +385,13 @@ class MovieCreateUpdateView(
             },
         )
 
-    def has_movie_id(self, entry: str) -> bool:
-        """Indicates if have real movie ID."""
-        return entry.startswith("tt")
-
-    def get_movie_info(self, movie_id: str) -> dict:
+    def get_movie_info(self, imdb_id: str) -> dict:
         """Pull IMDB info if have ID."""
-        if not movie_id.startswith("tt"):
-            logger.debug("Not a valid IMDB ID: %s", movie_id)
+        if not imdb_id.startswith("tt"):
+            logger.debug("Not a valid IMDB ID: %s", imdb_id)
             return {}
-        logger.debug("Looking up IMDB entry %s", movie_id)
-        results = get_movie(movie_id)
+        logger.debug("Looking up IMDB entry %s", imdb_id)
+        results = get_movie(imdb_id)
         if results.get("Response", "Unknown") == "True":
             logger.info("Found IMDB info")
             return results
@@ -486,12 +482,12 @@ class MovieCreateUpdateView(
             args,
             kwargs,
         )
-        movie_id = request.GET.get("movie_id") or "unknown"
+        imdb_id = request.GET.get("imdb_id") or "unknown"
         title = request.GET.get("title") or "TITLE NOT FOUND"
         identifier = int(kwargs.get("pk", 0))
         logger.debug(
             "MovieID: %s, Title: %s, identifier: %d",
-            movie_id,
+            imdb_id,
             title,
             identifier,
         )
@@ -500,8 +496,8 @@ class MovieCreateUpdateView(
         if movie:
             details = movie.details
         else:
-            details = MovieDetails.find(movie_id, title)
-        imdb_info = self.get_movie_info(movie_id)
+            details = MovieDetails.find(imdb_id, title)
+        imdb_info = self.get_movie_info(imdb_id)
 
         logger.debug("MOVIE: %s", movie)
         logger.debug("DETAILS: %s", details)
@@ -550,7 +546,7 @@ class MovieLookupView(
         logger.debug("Movie already has IMDB info")
         return redirect(
             reverse("viewmaster:movie-create-update", kwargs={"pk": movie.id})
-            + f"?{urlencode({'title': movie.details.title, 'movie_id': movie.details.source})}"
+            + f"?{urlencode({'title': movie.details.title, 'imdb_id': movie.details.source})}"
         )
 
 

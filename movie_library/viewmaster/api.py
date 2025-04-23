@@ -79,8 +79,8 @@ def lookup_movie(title, release, timeout=30) -> dict:
     return omdb_client.request_to(endpoint, timeout)
 
 
-def get_movie(movie_id, timeout=30) -> dict:
+def get_movie(imdb_id, timeout=30) -> dict:
     """Get a specific movie by ID."""
     omdb_client = RESTClient(OMDB_REST_API)
-    endpoint = f"{omdb_client.server_base_url}&i={movie_id}"
+    endpoint = f"{omdb_client.server_base_url}&i={imdb_id}"
     return omdb_client.request_to(endpoint, timeout)

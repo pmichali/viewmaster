@@ -71,7 +71,7 @@ td > a:first-child {
 	  {% for match in matches %}
 	    <tr>
 	      <td>
-	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" class="row-link">
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&imdb_id={{ match.imdbID }}" class="row-link">
 	        {% if "http" in match.Poster %}
 	          <img src="{{ match.Poster }}" width="50" alt="Movie poster" />
 	        {% else %}
@@ -80,17 +80,17 @@ td > a:first-child {
 	        </a>
 	      </td>
 	      <td>
-	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&imdb_id={{ match.imdbID }}" tabindex="-1" class="row-link">
 	        {{ match.Year }}
 	        </a>
 	      </td>
 	      <td>
-	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&imdb_id={{ match.imdbID }}" tabindex="-1" class="row-link">
 	        {{ match.Title | safe }}
 	        </a>
 	      </td>
 	      <td>
-	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id={{ match.imdbID }}" tabindex="-1" class="row-link">
+	        <a href="{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&imdb_id={{ match.imdbID }}" tabindex="-1" class="row-link">
 	        {{ match.imdbID }}
 	        </a>
 	      </td>
@@ -103,11 +103,11 @@ td > a:first-child {
 <form method="get" action="{% url 'viewmaster:movie-create-update' identifier %}" id="manual_entry">
   <label for="byID">IMDB ID</label>
   <input type="hidden" name="title" value="{{ partial_title|urlencode }}"/>
-  <input type="text" class="form-control" name="movie_id" id="byId" placeholder="Enter ID here..." />
+  <input type="text" class="form-control" name="imdb_id" id="byId" placeholder="Enter ID here..." />
   <button class="btn btn-success" id="manualButton">Use</button>    
 </form>
 <p>
-  <button class="btn btn-primary" onclick="window.location.href='{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&movie_id=unknown'">Skip</button>
+  <button class="btn btn-primary" onclick="window.location.href='{% url 'viewmaster:movie-create-update' identifier %}?title={{ partial_title|urlencode }}&imdb_id=unknown'">Skip</button>
   <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
   <button class="btn btn-info" onclick="window.location.href='{% url 'viewmaster:movie-list' %}'">Cancel</button>
 </p>
