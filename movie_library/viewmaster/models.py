@@ -1,5 +1,10 @@
 """Models for viewmaster app."""
 
+import os
+import logging
+import urllib.request
+
+from django.core.files import File
 from django.db import models
 from django.urls import reverse
 
@@ -14,6 +19,9 @@ FORMAT_CHOICES = [
     ("BR", "BR"),
     ("4K", "4K"),
 ]
+
+
+logger = logging.getLogger(__name__)
 
 
 class MovieDetails(models.Model):
@@ -38,6 +46,7 @@ class MovieDetails(models.Model):
         blank=True, default="unknown", help_text="IMDB identifier, if known."
     )
     cover_url = models.URLField(blank=True, default="", help_text="Poster image URL.")
+    cover_file = models.ImageField(blank=True, null=True, upload_to="covers")
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         # Title will be unique, except in case where there is a re-make of movie.
@@ -67,6 +76,28 @@ class MovieDetails(models.Model):
         hrs = int(self.duration.strftime("%H"))
         mins = int(self.duration.strftime("%M"))
         return f"{hrs}h {mins}m"
+
+    def save(self, *args, **kwargs):
+        """Override save to store cover image."""
+        logger.info("Args %s", kwargs)
+        url = kwargs.get("cover_url", "")
+        if url.startswith("http") and not self.cover_file:
+            file_name = os.path.basename(url)
+            logger.info("Saving cover for '%s'", self.title)
+            try:
+                result = urllib.request.urlretrieve(url)
+            except urllib.error.HTTPError as e:
+                logger.error("Unable to retrieve URL '%s': %s", url, e)
+            else:
+                with open(result[0], mode="rb") as f:
+                    self.cover_file.save(
+                        file_name,
+                        File(f),
+                    )
+                logger.info("Saved %s to %s", url, file_name)
+        else:
+            logger.info("No cover URL provided")  # Make debug
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Show the movie entry for debug."""
