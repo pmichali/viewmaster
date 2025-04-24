@@ -128,7 +128,7 @@
 	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
-		        <img src="{{ movie.details.cover_url }}" width="75" alt="cover" />
+		        <img src="{% get_media_prefix %}{{ movie.details.cover_file }}" width="75" alt="cover" />
 		      </div>
 		    </div>
 		    <div class="col-lg-12 rest">

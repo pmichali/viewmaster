@@ -138,10 +138,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # For cover images
 if 'viewmaster' in HOSTNAME:
-    MEDIA_ROOT = '/vol/web'
+    MEDIA_ROOT = '/vol/web/media'
 else:
-    MEDIA_ROOT = str(BASE_DIR / "public")
-MEDIA_URL = '/covers/'
+    MEDIA_ROOT = str(BASE_DIR / "public" / "media")
+MEDIA_URL = 'media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

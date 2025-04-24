@@ -304,40 +304,39 @@ class MovieCreateUpdateView(
         details_to_delete = None
         if not movie:
             logger.info("Creating new movie")
-            details = MovieDetails.find(source, title)
+            details_to_use = MovieDetails.find(source, title)
         else:  # Editing a movie
             logger.info("Editing existing movie ID: %d", movie.id)
-            details = movie.details
-            logger.debug("EXISTING DETAILS %s", details)
+            details_to_use = movie.details
+            logger.debug("EXISTING DETAILS %s", details_to_use)
 
             if movie.details_shared():
                 logger.debug("Details are currently being shared")
                 details_to_use = MovieDetails.find(source, title)
                 if details_to_use:
-                    if details_to_use.id == details.id:
+                    if details_to_use.id == movie.details.id:
                         which = "same shared"
                     else:
                         which = "different shared"
                 else:
                     which = "new"
                 logger.debug("Using %s details", which)
-                details = details_to_use
             else:  # Not shared
-                details_to_use = MovieDetails.find(source, title, details)
+                details_to_delete = details_to_use
+                details_to_use = MovieDetails.find(source, title, details_to_delete)
                 if details_to_use:
                     logger.debug(
                         "Switching from non-shared to shared details (delete old)"
                     )
-                    details_to_delete = details
-                    details = details_to_use
                 else:
-                    logger.debug("Altering (unshared) details")
-        logger.debug("TARGET DETAILS %s", details)
-        return (details, details_to_delete)
+                    logger.debug("Replacing (unshared) details")
+        logger.debug("TARGET DETAILS %s", details_to_use)
+        return (details_to_use, details_to_delete)
 
     def save_movie_and_details(self, movie_form, details_form):
         """Save movie and details."""
         saved_details = details_form.save()
+        saved_details.update_cover_file()
         saved_movie = movie_form.save(commit=False)
         saved_movie.details = saved_details
         saved_movie.save()
@@ -363,15 +362,14 @@ class MovieCreateUpdateView(
         )
         logger.info("Target source %s, target title '%s'", source, title)
         movie = Movie.find(identifier)
-        details, details_to_delete = self.get_details_to_change(movie, source, title)
+        details, old_details = self.get_details_to_change(movie, source, title)
         # Apply the changes
         movie_form = MovieCreateEditForm(movie_changes, instance=movie)
         details_form = MovieDetailsCreateEditForm(details_changes, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
             self.save_movie_and_details(movie_form, details_form)
-            if details_to_delete:
-                logger.debug("Deleting old details %s", details_to_delete)
-                details_to_delete.delete()
+            if old_details:
+                old_details.delete()
             return HttpResponseRedirect(self.success_url)
         logger.debug("Failed validation")
         return render(

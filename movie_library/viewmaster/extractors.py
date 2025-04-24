@@ -1,7 +1,10 @@
 """Extract ReST API info and convert for storage."""
 
+import os
 import logging
 import re
+
+from urllib.parse import urlparse
 
 
 CATEGORY_CHOICES = [
@@ -108,3 +111,10 @@ def order_genre_choices(suggested):
     recommended += sorted(others)
     logger.debug("Final choices %s", recommended)
     return recommended
+
+
+def get_extension(url):
+    """Get the file (image) extension, from the URL."""
+    parsed = urlparse(url)
+    _, ext = os.path.splitext(parsed.path)
+    return ext

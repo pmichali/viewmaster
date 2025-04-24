@@ -148,9 +148,13 @@
       		  {{ details_form.source }}
       		</td>
       		<td rowspan="2">
-     		  {% if "http" in details_form.cover_url.value %}
-      			<img src="{{ details_form.cover_url.value }}" width="100" alt="Movie Poster" />
-      		  {% endif %}
+      		  <img src=
+      		      {% if details_form.cover_file.value %}
+      		          "{% get_media_prefix %}{{ movie.details.cover_file }}"
+      		      {% else %}
+      		          "{{ details_form.cover_url.value }}"
+      		      {% endif %}
+               width="100" alt="Movie Poster" />
        		</td>
       	</tr>
      	<tr>

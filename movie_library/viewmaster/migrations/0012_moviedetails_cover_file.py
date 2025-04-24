@@ -42,7 +42,7 @@ def download_covers(apps, schema_editor):
             continue
         if not d.cover_file:
             file_name = f"{d.source}{get_ext(d.cover_url)}"
-            if os.path.exists(os.path.join(MEDIA_ROOT, "covers", file_name)):
+            if os.path.exists(os.path.join(MEDIA_ROOT, file_name)):
                 # If series, with different titles, can have same cover.
                 print(f"{d.title} DUPLICATE: Already have cover file - overwriting")
                 dups += 1
@@ -55,7 +55,7 @@ def download_covers(apps, schema_editor):
             with open(result[0], mode="rb") as f:
                 d.cover_file.save(file_name, File(f))
             d.save()
-            # print(f"{d.title} OK: Stored covers/{file_name}")
+            print(f"{d.title} OK: Stored {file_name}")
             count += 1
         else:
             print(f"{d.title} SKIPPED: Already have cover downloaded")
@@ -87,9 +87,9 @@ def remove_covers(apps, schema_editor):
             if os.path.exists(full_path):
                 os.remove(full_path)
                 count += 1
-                # print(f"{d.title} removed {d.cover_file.name}")
+                print(f"{d.title} removed {d.cover_file.name}")
             else:
-                print(f"{d.title} MISSING file {full_name}")
+                print(f"{d.title} MISSING file {full_path}")
                 missing += 1
             d.cover_file = None
             d.save()

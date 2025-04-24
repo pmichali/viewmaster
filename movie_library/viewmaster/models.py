@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from auditlog.registry import auditlog
 
-from .extractors import CATEGORY_CHOICES, RATING_CHOICES
+from .extractors import CATEGORY_CHOICES, RATING_CHOICES, get_extension
 
 
 FORMAT_CHOICES = [
@@ -77,27 +77,39 @@ class MovieDetails(models.Model):
         mins = int(self.duration.strftime("%M"))
         return f"{hrs}h {mins}m"
 
-    def save(self, *args, **kwargs):
-        """Override save to store cover image."""
-        logger.info("Args %s", kwargs)
-        url = kwargs.get("cover_url", "")
-        if url.startswith("http") and not self.cover_file:
-            file_name = os.path.basename(url)
-            logger.info("Saving cover for '%s'", self.title)
-            try:
-                result = urllib.request.urlretrieve(url)
-            except urllib.error.HTTPError as e:
-                logger.error("Unable to retrieve URL '%s': %s", url, e)
-            else:
-                with open(result[0], mode="rb") as f:
-                    self.cover_file.save(
-                        file_name,
-                        File(f),
+    def update_cover_file(self):
+        """Update cover file based on URL."""
+        if self.cover_url.startswith("http"):
+            if not self.cover_file:
+                try:
+                    result = urllib.request.urlretrieve(self.cover_url)
+                except urllib.error.HTTPError as e:
+                    logger.error(
+                        "Unable to read cover image from URL (%s): %s",
+                        self.cover_url,
+                        e,
                     )
-                logger.info("Saved %s to %s", url, file_name)
+                    return
+                file_name = f"{self.source}{get_extension(self.cover_url)}"
+                with open(result[0], mode="rb") as f:
+                    self.cover_file.save(file_name, File(f))
+                self.save()
+                logger.info(
+                    "Saved cover (%s) for '%s'", self.cover_file.name, self.title
+                )
+            else:
+                logger.debug("Already have URL stored locally")
         else:
-            logger.info("No cover URL provided")  # Make debug
-        super().save(*args, **kwargs)
+            logger.debug("No cover URL provided")
+
+    def delete(self, *args, **kwargs):
+        """Remove details and any cover file that may exist."""
+        if self.cover_file:
+            if os.path.isfile(self.cover_file.path):
+                logger.debug("Deleting cover file %s", self.cover_file.name)
+                os.remove(self.cover_file.path)
+        logger.debug("Deleting details %s", self)
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         """Show the movie entry for debug."""
@@ -105,7 +117,7 @@ class MovieDetails(models.Model):
             f"title='{self.title}' ({self.id}) plot='{self.plot}' actors='{self.actors}' "
             f"directors='{self.directors}' cat={self.genre} release={self.release} "
             f"rating={self.rating} duration={self.duration_str} "
-            f"imdb_id={self.source} cover_url={self.cover_url}"
+            f"imdb_id={self.source} cover_url={self.cover_url} ({self.cover_file})"
         )
 
 

@@ -82,6 +82,7 @@ class MovieDetailsCreateEditForm(ModelForm):
             "duration",
             "source",
             "cover_url",
+            "cover_file",
         ]
         widgets = {
             "title": TextInput(attrs={"size": 60, "autofocus": True}),
@@ -92,6 +93,7 @@ class MovieDetailsCreateEditForm(ModelForm):
             "duration": TimeInput(format="%H:%M", attrs={"size": 6}),
             "source": TextInput(attrs={"size": 12, "tabindex": -1}),
             "cover_url": HiddenInput(),
+            "cover_file": HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
