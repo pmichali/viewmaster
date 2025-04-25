@@ -297,11 +297,15 @@ class MovieCreateUpdateView(
     def get_details_to_change(self, movie, source, title):
         """Determine details to be updated.
 
-        Can be for this movie, existing "shared" details, or None (meaning
-        new details will be created from request data). If we are switching
-        from unshared to shared details, we will note the old details to
-        delete."""
-        details_to_delete = None
+        If currently sharing details, could edit same details,
+        switch to another shared details, or create new details (None).
+
+        If not sharing details, could edit same details, switch
+        to a shared detail, or to another non-shared (new)
+        details. In all three cases, must flag to delete any
+        existing cover file. New cover files may be created
+        by the new detail selection."""
+        old_details = None
         if not movie:
             logger.info("Creating new movie")
             details_to_use = MovieDetails.find(source, title)
@@ -311,27 +315,22 @@ class MovieCreateUpdateView(
             logger.debug("EXISTING DETAILS %s", details_to_use)
 
             if movie.details_shared():
-                logger.debug("Details are currently being shared")
-                details_to_use = MovieDetails.find(source, title)
-                if details_to_use:
-                    if details_to_use.id == movie.details.id:
-                        which = "same shared"
-                    else:
-                        which = "different shared"
-                else:
-                    which = "new"
-                logger.debug("Using %s details", which)
+                was = ""
             else:  # Not shared
-                details_to_delete = details_to_use
-                details_to_use = MovieDetails.find(source, title, details_to_delete)
-                if details_to_use:
-                    logger.debug(
-                        "Switching from non-shared to shared details (delete old)"
-                    )
+                was = "un"
+                old_details = movie.details
+            details_to_use = MovieDetails.find(source, title)
+            logger.error("SOURCE=%s TITLE=%s DETAILS %s", source, title, details_to_use)
+            if details_to_use:
+                if details_to_use.id == movie.details.id:
+                    which = "same"
                 else:
-                    logger.debug("Replacing (unshared) details")
+                    which = "different shared"
+            else:
+                which = "new"
+            logger.debug("For currently %sshared details using %s details", was, which)
         logger.debug("TARGET DETAILS %s", details_to_use)
-        return (details_to_use, details_to_delete)
+        return (details_to_use, old_details)
 
     def save_movie_and_details(self, movie_form, details_form):
         """Save movie and details."""
@@ -367,9 +366,9 @@ class MovieCreateUpdateView(
         movie_form = MovieCreateEditForm(movie_changes, instance=movie)
         details_form = MovieDetailsCreateEditForm(details_changes, instance=details)
         if movie_form.is_valid() and details_form.is_valid():
-            self.save_movie_and_details(movie_form, details_form)
             if old_details:
-                old_details.delete()
+                old_details.delete_cover()
+            self.save_movie_and_details(movie_form, details_form)
             return HttpResponseRedirect(self.success_url)
         logger.debug("Failed validation")
         return render(

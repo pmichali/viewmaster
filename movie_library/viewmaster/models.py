@@ -80,7 +80,7 @@ class MovieDetails(models.Model):
     def update_cover_file(self):
         """Update cover file based on URL."""
         if self.cover_url.startswith("http"):
-            if not self.cover_file:
+            if not self.cover_file or not os.path.isfile(self.cover_file.path):
                 try:
                     result = urllib.request.urlretrieve(self.cover_url)
                 except urllib.error.HTTPError as e:
@@ -102,12 +102,16 @@ class MovieDetails(models.Model):
         else:
             logger.debug("No cover URL provided")
 
-    def delete(self, *args, **kwargs):
-        """Remove details and any cover file that may exist."""
+    def delete_cover(self):
+        """Delete cover file, if it was set."""
         if self.cover_file:
             if os.path.isfile(self.cover_file.path):
                 logger.debug("Deleting cover file %s", self.cover_file.name)
                 os.remove(self.cover_file.path)
+
+    def delete(self, *args, **kwargs):
+        """Remove details and any cover file that may exist."""
+        self.delete_cover()
         logger.debug("Deleting details %s", self)
         super().delete(*args, **kwargs)
 
