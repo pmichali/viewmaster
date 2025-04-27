@@ -78,7 +78,7 @@
 	{% if movies %}
 	  {% if form.mode.value == "alpha" %}
 	    {% regroup movies by alpha_order as ordered_movies %}
-	  {% elif form.mode.value == "cat_alpha" or mode == "cat_date_alpha" %}
+	  {% elif form.mode.value == "cat_alpha" or form.mode.value == "cat_date_alpha" %}
 	    {% regroup movies by category_order as ordered_movies %}
 	  {% elif form.mode.value == "date" %}
 	    {% regroup movies by release_order as ordered_movies %}

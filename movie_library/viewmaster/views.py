@@ -82,7 +82,7 @@ class MovieListView(ListView):
         elif mode == "cat_date_alpha":
             movies = movies.order_by(Lower("category"), "-release", Lower("title"))
         elif mode == "date":
-            movies = movies.order_by("-release", "title")
+            movies = movies.order_by("-release", Lower("title"))
         elif mode == "collection":
             movies = (
                 movies.exclude(collection__isnull=True)
@@ -143,7 +143,7 @@ class MovieListView(ListView):
         elif mode == "cat_date_alpha":
             movies = movies.order_by(Lower("category"), "-release", Lower("title"))
         elif mode == "date":
-            movies = movies.order_by("-release", "title")
+            movies = movies.order_by("-release", Lower("title"))
         elif mode == "collection":
             movies = (
                 movies.exclude(collection__isnull=True)
