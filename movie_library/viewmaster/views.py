@@ -228,6 +228,11 @@ class MovieFindResultsView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
+def bad_url(cover_ref):
+    """If present, does simple check to see if URL is valid"""
+    return cover_ref and not cover_ref.startswith("http")
+
+
 class MovieCreateUpdateView(
     LoginRequiredMixin,
     SingleObjectTemplateResponseMixin,
@@ -240,6 +245,16 @@ class MovieCreateUpdateView(
     template_name = "viewmaster/create_update_movie.html"
     form_class = MovieCreateEditForm
     success_url = reverse_lazy("viewmaster:movie-list")
+
+    def bad_cover_ref(self, post_data):
+        """Check to see if current or to be changed cover URL is valid."""
+        if bad_url(post_data.get("cover_ref")):
+            logger.debug("Cover URL being set is invalid (%s)", post_data["cover_ref"])
+            return True
+        if self.object and bad_url(self.object.cover_ref):
+            logger.debug("Existing cover URL is not valid (%s)", self.object.cover_ref)
+            return True
+        return False
 
     def post(self, request, *args, **kwargs):
         """Create/update a movie."""
@@ -274,6 +289,12 @@ class MovieCreateUpdateView(
                 }
             )
             request.POST = post_copy
+        if self.bad_cover_ref(request.POST):
+            post_copy = request.POST.copy()
+            post_copy["cover_ref"] = ""
+            request.POST = post_copy
+            logger.debug("Clearing cover URL value")
+        logger.debug("Final POST data %s", request.POST)
         self.success_url = reverse("viewmaster:movie-list")
         return super().post(request, *args, **kwargs)
 
