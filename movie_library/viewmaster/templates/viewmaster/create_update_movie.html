@@ -36,6 +36,7 @@
       		</th>
       		<td colspan="5">
       		  {{ form.plot }}
+      		  {{ form.plot.errors }}
       		</td>
       	</tr>
      	<tr>
@@ -44,6 +45,7 @@
       		</th>
       		<td colspan="5">
       		  {{ form.actors }}
+      		  {{ form.actors.errors }}
       		</td>
       	</tr>
      	<tr>
@@ -52,6 +54,7 @@
       		</th>
       		<td colspan="5">
       		  {{ form.directors }}
+      		  {{ form.directors.errors }}
       		</td>
       	</tr>
       </tbody>
@@ -78,6 +81,7 @@
       		</th>
       		<td {% if overrides.rating %}class="overridden"{% endif %}>
       		  {{ form.rating }}
+      		  {{ form.rating.errors }}
       		  {% if overrides.rating %}
       		      <div>(was {{ overrides.rating_value }})</div>
       		  {% endif %}
@@ -99,6 +103,7 @@
       		</th>
       		<td>
       		  {{ form.format }}
+      		  {{ form.format.errors }}
       		</td>
       		<th>
       		  <label for="{{ form.category.id_for_label }}">Genre</label>

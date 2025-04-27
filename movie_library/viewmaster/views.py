@@ -304,7 +304,9 @@ class MovieCreateUpdateView(
         overrides = {}
         suggested_genres = ""
 
-        rating = extract_rating(imdb_info.get("Rated")) if imdb_info.get("Rated") else "?"
+        rating = (
+            extract_rating(imdb_info.get("Rated")) if imdb_info.get("Rated") else "?"
+        )
         duration = (
             extract_time(imdb_info.get("Runtime")) if imdb_info.get("Runtime") else "?"
         )
