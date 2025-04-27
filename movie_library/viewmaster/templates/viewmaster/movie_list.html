@@ -20,6 +20,8 @@
 
 {% block content %}
 {% load static %}
+{% load custom_template_tags %}
+
 <p id="pagehead">Movie Catalog - <span id="vers">v0.2.5</span></p>
 <form action="{% url 'viewmaster:movie-list' %}" id="view_form" method="post" class="display: inline-block">
 <div class="container-fluid text-center">
@@ -128,7 +130,7 @@
 	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
-		        <img src="{% get_media_prefix %}{{ movie.details.cover_file }}" width="75" alt="cover" />
+		        <img src="{% cover_image movie.details %}" width="75" alt="cover" />
 		      </div>
 		    </div>
 		    <div class="col-lg-12 rest">

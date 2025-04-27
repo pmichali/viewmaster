@@ -140,7 +140,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 if 'viewmaster' in HOSTNAME:
     MEDIA_ROOT = '/vol/web/media'
 else:
-    MEDIA_ROOT = str(BASE_DIR / "public" / "media")
+    MEDIA_ROOT = str(BASE_DIR / "public/media")
 MEDIA_URL = 'media/'
 
 # Default primary key field type

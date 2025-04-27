@@ -5,6 +5,7 @@ import logging
 import urllib.request
 
 from django.core.files import File
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.urls import reverse
 
@@ -46,7 +47,12 @@ class MovieDetails(models.Model):
         blank=True, default="unknown", help_text="IMDB identifier, if known."
     )
     cover_url = models.URLField(blank=True, default="", help_text="Poster image URL.")
-    cover_file = models.ImageField(blank=True, null=True, upload_to="covers")
+    cover_file = models.ImageField(
+        blank=True,
+        null=True,
+        upload_to="covers",
+        storage=FileSystemStorage(allow_overwrite=True),
+    )
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         # Title will be unique, except in case where there is a re-make of movie.

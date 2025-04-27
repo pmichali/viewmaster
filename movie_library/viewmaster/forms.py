@@ -101,14 +101,14 @@ class MovieDetailsCreateEditForm(ModelForm):
         logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
         super().__init__(*args, **kwargs)
 
-        if kwargs.get("initial") and kwargs["initial"].get("category_choices"):
+        if kwargs.get("initial", {}).get("category_choices"):
             # Create new form field to be able to set the choices. If try to just change
             # the choices attribute, it will be ignored, as there is one already.
             new_choices = kwargs["initial"]["category_choices"]
             self.fields["genre"] = ChoiceField(
                 choices=new_choices, help_text="Select a genre"
             )
-            logger.debug("Overriding choices")
+            logger.debug("Categories provided")
         # Set help text...
         for field in self.fields:
             help_text = self.fields[field].help_text

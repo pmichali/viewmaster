@@ -269,12 +269,19 @@ class MovieCreateUpdateView(
             for k, v in request.POST.items()
             if k in MovieCreateEditForm.Meta.fields
         }
+        logger.debug("Movie params: %s", movie_changes)
         details_changes = {
             k: v
             for k, v in request.POST.items()
             if k in MovieDetailsCreateEditForm.Meta.fields
         }
-        logger.debug("Movie params: %s", movie_changes)
+        if details_changes.get("cover_url"):
+            if not details_changes["cover_url"].startswith("http"):
+                logger.warning(
+                    "Had cover URL that was not valid (%s) - clearing",
+                    details_changes["cover_url"],
+                )
+                details_changes["cover_url"] = ""
         logger.debug("Details params: %s", details_changes)
 
         if "save_and_clear" in request.POST:
@@ -370,7 +377,11 @@ class MovieCreateUpdateView(
                 old_details.delete_cover()
             self.save_movie_and_details(movie_form, details_form)
             return HttpResponseRedirect(self.success_url)
-        logger.debug("Failed validation")
+        logger.debug(
+            "Failed validation: Movie is %svalid. Details are %svalid",
+            "" if movie_form.is_valid() else "not ",
+            "" if details_form.is_valid() else "not ",
+        )
         return render(
             request,
             self.template_name,
@@ -394,12 +405,12 @@ class MovieCreateUpdateView(
         logger.error("Unable to get movie info")
         return {}
 
-    def prepare_form_and_overrides(
+    def prepare_forms(
         self, movie: Movie, details: MovieDetails, imdb_info: dict, entered_title: str
     ):
-        """Setup initial values and overrides."""
+        """Setup initial values and note any overridden IMDB values."""
         details_initial = {}
-        overrides = {}
+        overridden = {}
         suggested_genres = ""
 
         rating = (
@@ -418,36 +429,33 @@ class MovieCreateUpdateView(
                     "duration": duration,
                 }
             )
-        else:
+        else:  # Editing a movie
             details_initial["genre"] = details.genre.upper()
             if rating not in ("?", details.rating):
                 logger.warning(
-                    "Overriding existing MPAA rating %s with IMDB value %s",
-                    details.rating,
+                    "IMDB entry has MPAA rating %s instead of %s",
                     rating,
+                    details.rating,
                 )
-                details_initial["rating"] = rating
-                overrides["rating"] = True
-                overrides["rating_value"] = details.rating
+                overridden["rating"] = True
+                overridden["rating_value"] = rating
             stored_duration = details.duration.strftime("%H:%M")
             if duration not in ("?", stored_duration):
                 logger.warning(
-                    "Overriding existing duration '%s' with IMDB value '%s'",
-                    stored_duration,
+                    "IMDB entry has duration '%s' instead of '%s'",
                     duration,
+                    stored_duration,
                 )
-                details_initial["duration"] = duration
-                overrides["duration"] = True
-                overrides["duration_value"] = stored_duration
+                overridden["duration"] = True
+                overridden["duration_value"] = duration
             if release not in ("?", details.release):
                 logger.warning(
-                    "Overriding existing release date %s with IMDB value %s",
-                    details.release,
+                    "IMDB entry has release date %s versus %s",
                     release,
+                    details.release,
                 )
-                details_initial["release"] = release
-                overrides["release"] = True
-                overrides["release_value"] = details.release
+                overridden["release"] = True
+                overridden["release_value"] = release
         if imdb_info:  # New info provided
             logger.debug("Storing collected IMDB info")
             details_initial.update(
@@ -468,7 +476,7 @@ class MovieCreateUpdateView(
         details_form = MovieDetailsCreateEditForm(
             initial=details_initial, instance=details
         )
-        return (form, details_form, overrides)
+        return (form, details_form, overridden)
 
     def get(self, request, *args, **kwargs):
         """Show form to create/update movie."""
@@ -499,7 +507,7 @@ class MovieCreateUpdateView(
         logger.debug("DETAILS: %s", details)
         logger.debug("IMDB: %s", imdb_info)
         self.object = movie  # pylint: disable=attribute-defined-outside-init
-        form, details_form, overrides = self.prepare_form_and_overrides(
+        form, details_form, overridden = self.prepare_forms(
             movie, details, imdb_info, title
         )
         return render(
@@ -509,7 +517,7 @@ class MovieCreateUpdateView(
                 "form": form,
                 "details_form": details_form,
                 "movie": movie,
-                "overrides": overrides,
+                "overridden": overridden,
             },
         )
 
