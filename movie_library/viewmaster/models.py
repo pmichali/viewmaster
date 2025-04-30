@@ -20,9 +20,6 @@ FORMAT_CHOICES = [
 class ImdbInfo(models.Model):
     """IMDB information for a movie (or series of movies)."""
 
-    identifier = models.CharField(
-        max_length=20, unique=True, help_text="IMDB movie ID."
-    )
     title = models.CharField(
         max_length=60, help_text="Up to 60 characters for title. May be overridden."
     )
@@ -30,9 +27,6 @@ class ImdbInfo(models.Model):
         help_text="Four digit year of release. May be overridden."
     )
     genres = models.CharField(help_text="List of genres applicable to the movie.")
-    plot = models.CharField(blank=True, default="", help_text="Plot summary.")
-    actors = models.CharField(blank=True, default="", help_text="Top cast.")
-    directors = models.CharField(blank=True, default="", help_text="Director(s).")
     rating = models.CharField(
         max_length=5,
         default="?",
@@ -42,6 +36,14 @@ class ImdbInfo(models.Model):
     duration = models.TimeField(
         help_text="Duration in hh:mm format. May be overridden."
     )
+
+    # These will be common to every movie with this IMDB #
+    identifier = models.CharField(
+        max_length=20, unique=True, help_text="IMDB movie ID."
+    )
+    plot = models.CharField(blank=True, default="", help_text="Plot summary.")
+    actors = models.CharField(blank=True, default="", help_text="Top cast.")
+    directors = models.CharField(blank=True, default="", help_text="Director(s).")
     cover_url = models.URLField(
         blank=True, default="", help_text="URL where poster image is located."
     )

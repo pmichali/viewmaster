@@ -20,6 +20,7 @@
 
 {% block content %}
 {% load static %}
+{% load custom_template_tags %}
 <p id="pagehead">Movie Catalog - <span id="vers">v0.2.3</span></p>
 <form action="{% url 'viewmaster:movie-list' %}" id="view_form" method="post" class="display: inline-block">
 <div class="container-fluid text-center">
@@ -128,12 +129,12 @@
 	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
-		        <img src="{{ movie.cover_ref }}" width="75" alt="cover" />
+		        <img {% movie_cover movie %} width="75" alt="cover" />
 		      </div>
 		    </div>
 		    <div class="col-lg-12 rest">
 		      <div class="row"> <!-- rest of movie info, left of cover -->
-		        <div class="col-lg-7">{{ movie.title }}</div>
+		        <div class="col-lg-7{% if movie.bad %} bad{% endif %}">{{ movie.title }}</div>
 		        <div class="col-lg">{{ movie.rating }}</div>
 		        <div class="col-lg">{{ movie.category }}</div>
 		        <div class="col-lg">{{ movie.movie_id }}</div>
@@ -141,11 +142,11 @@
 		        <div class="col-lg">{{ movie.duration_str }}</div>
 		      </div>
 		      <div class="row">  <!-- lines 2-4 for plot -->
-		        <div class="col-lg-12 plot">PLOT: {{ movie.plot|default:"?" }}</div>
+		        <div class="col-lg-12 plot">PLOT: {% plot movie.imdb_info %}</div>
 		      </div>
 		      <div class="row">  <!--  line 5 more info -->
-		        <div class="col-lg-5">STARS: {{ movie.actors|default:"?" }}</div>
-		        <div class="col-lg-2">DIRS: {{ movie.directors|default:"?" }}</div>
+		        <div class="col-lg-5">STARS: {% actors movie.imdb_info %}</div>
+		        <div class="col-lg-2">DIRS: {% directors movie.imdb_info %}</div>
 		        <div class="col-lg">{{ movie.aspect|default:"aspect?" }}</div>
 		        <div class="col-lg">{{ movie.audio|default:"audio?" }}</div>
 		        <div class="col-lg">COLL: {{ movie.collection }}</div>
@@ -177,9 +178,6 @@
 
 {% block javascript %}
   <script>
-    document.getElementById("id_mode").onchange = function () {
-    	document.getElementById("view_form").submit();
-    }
     document.getElementById("id_mode").onclick = function () {
     	document.getElementById("view_form").submit();
     }
