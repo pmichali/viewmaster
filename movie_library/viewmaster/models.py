@@ -1,5 +1,6 @@
 """Models for viewmaster app."""
 
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.urls import reverse
 
@@ -14,6 +15,61 @@ FORMAT_CHOICES = [
     ("BR", "BR"),
     ("4K", "4K"),
 ]
+
+
+class ImdbInfo(models.Model):
+    """IMDB information for a movie (or series of movies)."""
+
+    identifier = models.CharField(
+        max_length=20, unique=True, help_text="IMDB movie ID."
+    )
+    title = models.CharField(
+        max_length=60, help_text="Up to 60 characters for title. May be overridden."
+    )
+    release = models.IntegerField(
+        help_text="Four digit year of release. May be overridden."
+    )
+    genres = models.CharField(help_text="List of genres applicable to the movie.")
+    plot = models.CharField(blank=True, default="", help_text="Plot summary.")
+    actors = models.CharField(blank=True, default="", help_text="Top cast.")
+    directors = models.CharField(blank=True, default="", help_text="Director(s).")
+    rating = models.CharField(
+        max_length=5,
+        default="?",
+        choices=RATING_CHOICES,
+        help_text="Select the MPAA rating. May be overridden.",
+    )
+    duration = models.TimeField(
+        help_text="Duration in hh:mm format. May be overridden."
+    )
+    cover_url = models.URLField(
+        blank=True, default="", help_text="URL where poster image is located."
+    )
+    cover_file = models.ImageField(
+        blank=True,
+        null=True,
+        upload_to="covers",
+        storage=FileSystemStorage(allow_overwrite=True),
+    )
+
+    @property
+    def duration_str(self):
+        """Display custom format for duration."""
+        if not self.duration:
+            return "?"
+        hrs = int(self.duration.strftime("%H"))
+        mins = int(self.duration.strftime("%M"))
+        return f"{hrs}h {mins}m"
+
+    def __str__(self):
+        """Show the IMDB info."""
+        return (
+            f"identifier-'{self.identifier}' ({self.id}) title='{self.title} "
+            f"plot='{self.plot}' actors='{self.actors}' directors='{self.directors}' "
+            f"release={self.release} rating={self.rating} duration={self.duration_str} "
+            f"cover_url='{self.cover_url}' cover_file='{self.cover_file.name}' "
+            f"genres='{self.genres}'"
+        )
 
 
 class Movie(models.Model):
@@ -66,6 +122,8 @@ class Movie(models.Model):
     movie_id = models.CharField(
         blank=True, default="unknown", help_text="IMDB movie ID (imported)"
     )
+
+    imdb_info = models.ForeignKey(ImdbInfo, null=True, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         """Link used when updating movie?"""
@@ -121,4 +179,5 @@ class Movie(models.Model):
         )
 
 
+auditlog.register(ImdbInfo)
 auditlog.register(Movie)

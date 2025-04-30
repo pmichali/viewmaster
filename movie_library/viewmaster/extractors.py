@@ -24,6 +24,7 @@ CATEGORY_CHOICES = [
     ("MYSTERY", "mystery"),
     ("ROMANCE", "romance"),
     ("SCI-FI", "sci-fi"),
+    ("SPORTS", "sports"),
     ("SUSPENSE", "suspense"),
     ("THRILLER", "thriller"),
     ("UNKNOWN", "unknown"),
@@ -58,7 +59,6 @@ def extract_time(time_str):
     """
     total_mins, _, _ = time_str.partition(" ")
     if not total_mins.isdigit():
-        logging.warning("Unable to parse time string '%s'", time_str)
         return "00:00"
     hours = int(total_mins) // 60
     minutes = int(total_mins) % 60
@@ -72,12 +72,17 @@ def extract_rating(rating):
 
 def extract_year(year):
     """Ensure year is just a number."""
+
     m = year_re.match(year)
     if not m:
         return 0
     return int(m.group())
 
 
+MUSIC_RE = re.compile(r"^MUSIC$")
+
+
+# TODO: Rework, combine with filter_genres(), or remove...
 def order_genre_choices(suggested):
     """Validate provided genre choices and prepend to the list of allowable."""
     suggested_genres = [g.upper() for g in suggested.split(", ")]
@@ -89,7 +94,7 @@ def order_genre_choices(suggested):
     logger.debug("Have suggested genres: %s", suggested_genres)
     # Map different spellings to those we support
     suggested_genres = [sg.replace("ANIMATION", "ANIMATED") for sg in suggested_genres]
-    suggested_genres = [sg.replace("MUSIC", "MUSICAL") for sg in suggested_genres]
+    # Need MUSIC -> MUSICAL, SPORT -> SPORTS
     suggested_genres = [
         sg.replace("SCIENCE FICTION", "SCI-FI") for sg in suggested_genres
     ]
@@ -108,3 +113,36 @@ def order_genre_choices(suggested):
     recommended += sorted(others)
     logger.debug("Final choices %s", recommended)
     return recommended
+
+
+def filter_genres(provided_genres):
+    """Convert genres provided, into those we support."""
+    msgs = []
+    genres = [g.upper() for g in provided_genres.split(", ")]
+    # msgs.append(f"DEBUG: Provided genres: {genres}")
+    # Translate genre names
+    filtered_genres = []
+    for genre in genres:
+        match genre:
+            case "ANIMATION":
+                filtered_genres.append("ANIMATED")
+            case "N/A":
+                filtered_genres.append("MISC")
+            case "SCIENCE FICTION":
+                filtered_genres.append("SCI-FI")
+            case "MUSIC":
+                filtered_genres.append("MUSICAL")
+            case "WAR":
+                filtered_genres.append("MILITARY")
+            case "SPORT":
+                filtered_genres.append("SPORTS")
+            case _:
+                if genre in CATEGORY_DICT:
+                    filtered_genres.append(genre)
+                else:
+                    msgs.append(
+                        f"WARNING! Genre {genre} is not in set of known genres - ignoring"
+                    )
+    filtered_genres.sort()
+    # msgs.append(f"DEBUG: Used genres: {filtered_genres}")
+    return ", ".join(filtered_genres), msgs

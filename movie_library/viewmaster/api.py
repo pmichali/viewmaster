@@ -6,7 +6,7 @@ import logging
 import urllib
 
 import requests
-import simplejson
+# import simplejson
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class RESTClient:  # pylint: disable=too-few-public-methods
 
     def request_to(self, endpoint, timeout=30) -> dict:
         """Send a GET request to OMDb."""
-        logger.info("GET request to %s", endpoint)
+        # logger.info("GET request to %s", endpoint)
         try:
             r = requests.get(endpoint, timeout=timeout)
         except requests.exceptions.Timeout as err:
@@ -45,7 +45,7 @@ class RESTClient:  # pylint: disable=too-few-public-methods
             ) from cerr
         if r.status_code == requests.codes.ok:
             response = r.json()
-            logger.debug("Results:\n%s", simplejson.dumps(response, indent=4))
+            # logger.debug("Results:\n%s", simplejson.dumps(response, indent=4))
             return response
         try:
             fail_details = r.json()
