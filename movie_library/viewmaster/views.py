@@ -5,6 +5,7 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Avg
 from django.db.models.functions import Lower
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import urlencode
@@ -18,10 +19,11 @@ from django.views.generic.edit import (
     ProcessFormView,
 )
 
-from .api import get_movie, search_movies
-from .extractors import extract_rating, extract_time, extract_year, order_genre_choices
-from .models import Movie
-from .forms import MovieClearForm, MovieCreateEditForm, MovieFindForm, MovieListForm
+from .api import search_movies
+from .extractors import order_genre_choices
+from .models import ImdbInfo, Movie
+from .forms import MovieClearForm, MovieCreateEditForm, MovieImdbCreateEditForm
+from .forms import MovieFindForm, MovieListForm
 
 
 logger = logging.getLogger(__name__)
@@ -210,7 +212,7 @@ class MovieFindResultsView(LoginRequiredMixin, View):
 
     def get_all_candidates(self, request, partial_title, existing_id=0):
         """Obtain all possible candidates and display them."""
-        logger.debug("looking for candidates for '%s' (%d)", partial_title, existing_id)
+        logger.debug("looking for candidates for '%s' (%s)", partial_title, existing_id)
         if partial_title:
             results = search_movies(partial_title)
             success = results.get("Response", "Missing")
@@ -256,137 +258,177 @@ class MovieCreateUpdateView(
             return True
         return False
 
+    def collect_changes(self, request, identifier):
+        """Gather all the changes for each model."""
+        # TODO: Change this to use imdb_info vs details, and make sure we have meta fields set right
+        movie_changes = {
+            k: v
+            for k, v in request.POST.items()
+            if k in MovieCreateEditForm.Meta.fields
+        }
+        logger.debug("Movie params: %s", movie_changes)
+        imdb_changes = {
+            k: v
+            for k, v in request.POST.items()
+            if k in MovieImdbCreateEditForm.Meta.fields
+        }
+        if imdb_changes.get("imdb_cover_url"):
+            if not imdb_changes["imdb_cover_url"].startswith("http"):
+                logger.warning(
+                    "Had cover URL that was not valid (%s) - clearing",
+                    imdb_changes["imdb_cover_url"],
+                )
+                imdb_changes["imdb_cover_url"] = ""
+        logger.debug("IMDB params: %s", imdb_changes)
+
+        # if "save_and_clear" in request.POST:
+        #     self.success_url = reverse(
+        #         "viewmaster:movie-clear", kwargs={"pk": identifier}
+        #     )
+        #     logger.debug("Ensuring all IMDB info is clear, for save/clear operation")
+        #     imdb_changes.update(
+        #         {
+        #             "plot": "",
+        #             "actors": "",
+        #             "directors": "",
+        #             "identifier": "unknown",  # needed or do we disconnect movie from imdb?
+        #             "cover_url": "",
+        #             # TODO: What about cover_file? identifier? movie ref to imdb_info?
+        #         }
+        #     )
+        #     logger.debug("Revised IMDB: %s", imdb_changes)
+        return (movie_changes, imdb_changes)
+
+    # def get_imdb_info_to_change(self, movie, imdb_id, title):
+    #     """Determine details to be updated.
+    #     If currently sharing details, could edit same details,
+    #     switch to another shared details, or create new details (None).
+    #
+    #     If not sharing details, could edit same details, switch
+    #     to a shared detail, or to another non-shared (new)
+    #     details. In all three cases, must flag to delete any
+    #     existing cover file. New cover files may be created
+    #     by the new detail selection."""
+    #     old_details = None
+    #     if not movie:
+    #         logger.info("Creating new movie")
+    #         details_to_use = MovieDetails.find(source, title)
+    #     else:  # Editing a movie
+    #         logger.info("Editing existing movie ID: %d", movie.id)
+    #         details_to_use = movie.details
+    #         logger.debug("EXISTING DETAILS %s", details_to_use)
+    #
+    #         if movie.details_shared():
+    #             was = ""
+    #         else:  # Not shared
+    #             was = "un"
+    #             old_details = movie.details
+    #         details_to_use = MovieDetails.find(source, title)
+    #         logger.error("SOURCE=%s TITLE=%s DETAILS %s", source, title, details_to_use)
+    #         if details_to_use:
+    #             if details_to_use.id == movie.details.id:
+    #                 which = "same"
+    #             else:
+    #                 which = "different shared"
+    #         else:
+    #             which = "new"
+    #         logger.debug("For currently %sshared details using %s details", was, which)
+    #     logger.debug("TARGET DETAILS %s", details_to_use)
+    #     return (details_to_use, old_details)
+
+    # def save_movie_and_details(self, movie_form, details_form):
+    #     """Save movie and details."""
+    #     saved_details = details_form.save()
+    #     saved_details.update_cover_file()
+    #     saved_movie = movie_form.save(commit=False)
+    #     saved_movie.details = saved_details
+    #     saved_movie.save()
+    #     logger.debug("Saved movie and details")
+
     def post(self, request, *args, **kwargs):
         """Create/update a movie."""
         logger.debug(
-            "Create/Update POST: REQUEST %s, ARGS %s, KWARGS %s, SESSIION %s",
-            dict(request.POST),
+            "Create/Update POST: POSTARGS %s, GETARGS %s, ARGS %s, KWARGS %s, SESSIION %s",
+            request.POST.dict(),
+            request.GET.dict(),
             args,
             kwargs,
             dict(request.session),
         )
         identifier = int(kwargs.get("pk", "0"))
-        if identifier:
-            self.object = (  # pylint: disable=attribute-defined-outside-init
-                Movie.objects.get(pk=identifier)
-            )
-        else:
-            self.object = None  # pylint: disable=attribute-defined-outside-init
-        logger.debug("OBJ %s", self.object)
-        if "save_and_clear" in request.POST:
-            self.success_url = reverse(
-                "viewmaster:movie-clear", kwargs={"pk": identifier}
-            )
-            logger.debug("Saving and will then clear IMDB info")
-            post_copy = request.POST.copy()
-            post_copy.update(
-                {
-                    "plot": "",
-                    "actors": "",
-                    "directors": "",
-                    "movie_id": "",
-                    "cover_ref": "",
-                }
-            )
-            request.POST = post_copy
-        if self.bad_cover_ref(request.POST):
-            post_copy = request.POST.copy()
-            post_copy["cover_ref"] = ""
-            request.POST = post_copy
-            logger.debug("Clearing cover URL value")
-        logger.debug("Final POST data %s", request.POST)
-        self.success_url = reverse("viewmaster:movie-list")
-        return super().post(request, *args, **kwargs)
+        movie_changes, imdb_changes = self.collect_changes(request, identifier)
+
+        imdb_id = imdb_changes.get(
+            "identifier", request.POST.get("identifier", "unknown")
+        )
+        title = movie_changes.get("title", request.POST.get("title", "MISSING TITLE!"))
+        logger.info("Target IMDB %s, target title '%s'", imdb_id, title)
+        movie = Movie.find(identifier)
+        imdb_info = ImdbInfo.find_or_retrieve(imdb_id)
+        # imdb_info, old_imdb_info = self.get_imdb_info_to_change(movie, imdb_id, title)
+        # Apply the changes
+        movie_form = MovieCreateEditForm(movie_changes, instance=movie)
+        imdb_form = MovieImdbCreateEditForm(imdb_changes, instance=imdb_info)
+        # if movie_form.is_valid() and imdb_form.is_valid():
+        #     logger.info("Valid forms")
+        #     # if old_imdb_info:   # TOOD: This should delete IMDB entry, if no refs, including file...
+        #     #     old_imdb_info.delete_cover()
+        #     # self.save_movie_and_details(movie_form, imdb_form)
+        #     return HttpResponseRedirect(self.success_url)
+        # logger.debug(
+        #     "Failed validation: Movie is %svalid. Details are %svalid",
+        #     "" if movie_form.is_valid() else "not ",
+        #     "" if imdb_form.is_valid() else "not ",
+        # )
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": movie_form,
+                "imdb_form": imdb_form,
+                "movie": None,
+            },
+        )
 
     def has_movie_id(self, entry: str) -> bool:
         """Indicates if have real movie ID."""
         return entry.startswith("tt")
 
-    def get_movie_info(self, movie_id: str, movie: Movie) -> dict:
-        """Pull IMDB info if selected."""
-        existing_IMDB = (  # pylint: disable=invalid-name
-            self.has_movie_id(movie.movie_id) if movie else False
-        )
+    def get_movie_info(self, movie_id: str) -> ImdbInfo:
+        """Get/lookup IMDB info if ID provided."""
+        if movie_id == "unknown":
+            return {}
+        imdb_info = ImdbInfo.find_or_retrieve(movie_id)
+        logger.debug("Have %s", imdb_info)
+        return imdb_info
 
-        if not existing_IMDB and self.has_movie_id(movie_id):
-            logger.debug("Looking up IMDB entry %s", movie_id)
-            results = get_movie(movie_id)
-            if results.get("Response", "Unknown") == "True":
-                logger.info("Found IMDB info")
-                return results
-            logger.error("Unable to get movie info for %s", movie_id)
-        return {}
-
-    def prepare_form_and_overrides(
-        self, movie: Movie, imdb_info: dict, entered_title: str
-    ):
+    def prepare_forms(self, movie: Movie, imdb_info: ImdbInfo, entered_title: str):
         """Setup initial values and overrides."""
         initial = {}
-        overrides = {}
-        suggested_genres = ""
-
-        rating = (
-            extract_rating(imdb_info.get("Rated")) if imdb_info.get("Rated") else "?"
-        )
-        duration = (
-            extract_time(imdb_info.get("Runtime")) if imdb_info.get("Runtime") else "?"
-        )
-        release = extract_year(imdb_info.get("Year")) if imdb_info.get("Year") else "?"
+        overridden = {}
         if not movie:  # New movie
-            initial.update(
-                {
-                    "title": imdb_info.get("Title", entered_title),
-                    "release": release,
-                    "rating": rating,
-                    "duration": duration,
-                }
-            )
+            if imdb_info:
+                initial.update(
+                    {
+                        "title": imdb_info.title,
+                        "release": imdb_info.release,
+                        "rating": imdb_info.rating,
+                        "duration": imdb_info.duration,
+                    }
+                )
+                suggested_genres = imdb_info.genres
+            else:
+                initial["title"] = entered_title
+                suggested_genres = ""
         else:
-            initial["category"] = movie.category.upper()
-            if rating not in ("?", movie.rating):
-                logger.warning(
-                    "Overriding existing MPAA rating %s with IMDB value %s",
-                    movie.rating,
-                    rating,
-                )
-                initial["rating"] = rating
-                overrides["rating"] = True
-                overrides["rating_value"] = movie.rating
-            stored_duration = movie.duration.strftime("%H:%M")
-            if duration not in ("?", stored_duration):
-                logger.warning(
-                    "Overriding existing duration '%s' with IMDB value '%s'",
-                    stored_duration,
-                    duration,
-                )
-                initial["duration"] = duration
-                overrides["duration"] = True
-                overrides["duration_value"] = stored_duration
-            if release not in ("?", movie.release):
-                logger.warning(
-                    "Overriding existing release date %s with IMDB value %s",
-                    movie.release,
-                    release,
-                )
-                initial["release"] = release
-                overrides["release"] = True
-                overrides["release_value"] = movie.release
-        if imdb_info:  # New info provided
-            logger.debug("Storing collected IMDB info")
-            initial.update(
-                {
-                    "movie_id": imdb_info.get("imdbID"),
-                    "plot": imdb_info.get("Plot", ""),
-                    "actors": imdb_info.get("Actors", ""),
-                    "directors": imdb_info.get("Director", ""),
-                    "cover_ref": imdb_info.get("Poster", ""),
-                }
-            )
-        suggested_genres = imdb_info.get("Genre", "")
+            initial["genre"] = movie.category.upper()
+            overridden = movie.detect_overrides_from(imdb_info)
+            suggested_genres = imdb_info.genres
         initial.update({"category_choices": order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial, instance=movie)
-        return (form, overrides)
+        imdb_form = MovieImdbCreateEditForm(initial={}, instance=imdb_info)
+        return (form, imdb_form, overridden)
 
     def get(self, request, *args, **kwargs):
         """Show form to create/update movie."""
@@ -397,7 +439,7 @@ class MovieCreateUpdateView(
             kwargs,
         )
         movie_id = request.GET.get("movie_id") or "unknown"
-        title = request.GET.get("title") or ""
+        title = request.GET.get("title") or "MISSING TITLE!"
         identifier = int(kwargs.get("pk", 0))
         logger.debug(
             "MovieID: %s, Title: %s, identifier: %d",
@@ -408,12 +450,17 @@ class MovieCreateUpdateView(
 
         movie = Movie.objects.get(pk=identifier) if identifier else None
         self.object = movie  # pylint: disable=attribute-defined-outside-init
-        imdb_info = self.get_movie_info(movie_id, movie)
-        form, overrides = self.prepare_form_and_overrides(movie, imdb_info, title)
+        imdb_info = self.get_movie_info(movie_id)
+        form, imdb_form, overridden = self.prepare_forms(movie, imdb_info, title)
         return render(
             request,
             self.template_name,
-            {"form": form, "movie": movie, "overrides": overrides},
+            {
+                "form": form,
+                "imdb_form": imdb_form,
+                "movie": movie,
+                "overridden": overridden,
+            },
         )
 
 

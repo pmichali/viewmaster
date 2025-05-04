@@ -32,29 +32,29 @@
       	</tr>
       	<tr>
       		<th>
-      		  <label for="{{ form.plot.id_for_label }}">Plot</label>
+      		  <label for="{{ imdb_form.plot.id_for_label }}">Plot</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.plot }}
-      		  {{ form.plot.errors }}
+      		  {{ imdb_form.plot }}
+      		  {{ imdb_form.plot.errors }}
       		</td>
       	</tr>
      	<tr>
       		<th>
-      		  <label for="{{ form.actors.id_for_label }}">Actor(s)</label>
+      		  <label for="{{ imdb_form.actors.id_for_label }}">Actor(s)</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.actors }}
-      		  {{ form.actors.errors }}
+      		  {{ imdb_form.actors }}
+      		  {{ imdb_form.actors.errors }}
       		</td>
       	</tr>
      	<tr>
       		<th>
-      		  <label for="{{ form.directors.id_for_label }}">Director(s)</label>
+      		  <label for="{{ imdb_form.directors.id_for_label }}">Director(s)</label>
       		</th>
       		<td colspan="5">
-      		  {{ form.directors }}
-      		  {{ form.directors.errors }}
+      		  {{ imdb_form.directors }}
+      		  {{ imdb_form.directors.errors }}
       		</td>
       	</tr>
       </tbody>
@@ -69,31 +69,31 @@
       		<th>
       		  <label for="{{ form.release.id_for_label }}">Release</label>
       		</th>
-      		<td {% if overrides.release %}class="overridden"{% endif %}>
+      		<td {% if overridden.release %}class="overridden"{% endif %}>
       		  {{ form.release }}
       		  {{ form.release.errors }}
-      		  {% if overrides.release %}
-      		      <div>(was {{ overrides.release_value }})</div>
+      		  {% if overridden.release %}
+      		      <div>(was {{ overridden.release_value }})</div>
       		  {% endif %}
       		</td>
       		<th>
       		  <label for="{{ form.rating.id_for_label }}">Rating</label>
       		</th>
-      		<td {% if overrides.rating %}class="overridden"{% endif %}>
+      		<td {% if overridden.rating %}class="overridden"{% endif %}>
       		  {{ form.rating }}
       		  {{ form.rating.errors }}
-      		  {% if overrides.rating %}
-      		      <div>(was {{ overrides.rating_value }})</div>
+      		  {% if overridden.rating %}
+      		      <div>(was {{ overridden.rating_value }})</div>
       		  {% endif %}
       		</td>
       		<th>
       		  <label for="{{ form.duration.id_for_label }}">Duration</label>
       		</th>
-      		<td {% if overrides.duration %}class="overridden"{% endif %}>
+      		<td {% if overridden.duration %}class="overridden"{% endif %}>
       		  {{ form.duration }}
       		  {{ form.duration.errors }}
-      		  {% if overrides.duration %}
-      		      <div>(was {{ overrides.duration_value }})</div>
+      		  {% if overridden.duration %}
+      		      <div>(was {{ overridden.duration_value }})</div>
       		  {% endif %}
       		</td>
       	</tr>
@@ -146,14 +146,14 @@
       		  {{ form.collection.errors }}
       		</td>
        		<th>
-      		  <label for="{{ form.title.id_for_label }}">Movie ID</label>
+      		  <label for="{{ imdb_form.identifier.id_for_label }}">Movie ID</label>
       		</th>
       		<td colspan="2">
-      		  {{ form.movie_id }}
+      		  {{ imdb_form.identifier }}
       		</td>
       		<td rowspan="2">
-     		  {% if "http" in form.cover_ref.value %}
-      			<img src="{{ form.cover_ref.value }}" width="100" alt="Movie Poster" />
+     		  {% if "http" in imdb_form.cover_url.value %}
+      			<img src="{{ imdb_form.cover_url.value }}" width="100" alt="Movie Poster" />
       		  {% endif %}
        		</td>
       	</tr>
@@ -181,7 +181,16 @@
        </tbody>
       </table>
    	  </fieldset>
-   	  <p>{{ form.cover_ref }}</p> <!-- this is hidden, but needed -->
+   	  <!--  Hidden fields -->
+   	  <p>
+   	  {{ imdb_form.genres }}
+   	  {{ imdb_form.cover_url }}
+   	  {{ imdb_form.cover_file }}
+   	  {{ imdb_form.duration }}
+   	  {{ imdb_form.rating }}
+   	  {{ imdb_form.release }}
+   	  {{ imdb_form.title }}
+   	  </p> 
       <input id="save" type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>
       <button id="cancelBtn" class="btn btn-info">Cancel</button>

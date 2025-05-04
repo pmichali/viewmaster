@@ -2,6 +2,7 @@
 
 import logging
 import re
+from datetime import time
 
 
 CATEGORY_CHOICES = [
@@ -57,12 +58,27 @@ def extract_time(time_str):
 
     Expect input to be "# mins" and want output "HH:MM".
     """
+    logger.debug("extract time: %s", time_str)
     total_mins, _, _ = time_str.partition(" ")
     if not total_mins.isdigit():
         return "00:00"
     hours = int(total_mins) // 60
     minutes = int(total_mins) % 60
     return f"{hours:02d}:{minutes:02d}"
+
+
+def extract_duration(time_str):
+    """Convert textual time to hours/mins.
+
+    Expect input to be "# mins" and want output "HH:MM".
+    """
+    logger.debug("extract time: %s", time_str)
+    total_mins, _, _ = time_str.partition(" ")
+    if not total_mins.isdigit():
+        return time(hour=0, minute=0)
+    hours = int(total_mins) // 60
+    minutes = int(total_mins) % 60
+    return time(hour=hours, minute=minutes)
 
 
 def extract_rating(rating):
@@ -82,30 +98,15 @@ def extract_year(year):
 MUSIC_RE = re.compile(r"^MUSIC$")
 
 
-# TODO: Rework, combine with filter_genres(), or remove...
 def order_genre_choices(suggested):
     """Validate provided genre choices and prepend to the list of allowable."""
-    suggested_genres = [g.upper() for g in suggested.split(", ")]
+    suggested_genres = suggested.split(", ")
     if not suggested:
         logger.debug("No suggested genres, so using defaults")
         recommended = [("", "--------")]
         recommended += CATEGORY_CHOICES
         return recommended
     logger.debug("Have suggested genres: %s", suggested_genres)
-    # Map different spellings to those we support
-    suggested_genres = [sg.replace("ANIMATION", "ANIMATED") for sg in suggested_genres]
-    # Need MUSIC -> MUSICAL, SPORT -> SPORTS
-    suggested_genres = [
-        sg.replace("SCIENCE FICTION", "SCI-FI") for sg in suggested_genres
-    ]
-    suggested_genres = [sg.replace("WAR", "MILITARY") for sg in suggested_genres]
-    # Warn of unknown genres
-    for sg in suggested_genres:
-        if sg not in CATEGORY_DICT:
-            logging.warning("Genre %s is not in set of known genres", sg)
-    # Sort them
-    suggested_genres.sort()
-    logger.debug("Modified genres: %s", suggested_genres)
     # Convert to tuples
     recommended = [(g, g.lower()) for g in suggested_genres]
     others = list(set(CATEGORY_CHOICES) - set(recommended))
@@ -119,7 +120,7 @@ def filter_genres(provided_genres):
     """Convert genres provided, into those we support."""
     msgs = []
     genres = [g.upper() for g in provided_genres.split(", ")]
-    # msgs.append(f"DEBUG: Provided genres: {genres}")
+    msgs.append(f"Provided genres: {genres}")
     # Translate genre names
     filtered_genres = []
     for genre in genres:
@@ -141,8 +142,8 @@ def filter_genres(provided_genres):
                     filtered_genres.append(genre)
                 else:
                     msgs.append(
-                        f"WARNING! Genre {genre} is not in set of known genres - ignoring"
+                        f"Genre {genre} is not in set of known genres - ignoring"
                     )
     filtered_genres.sort()
-    # msgs.append(f"DEBUG: Used genres: {filtered_genres}")
+    msgs.append(f"Used genres: {filtered_genres}")
     return ", ".join(filtered_genres), msgs

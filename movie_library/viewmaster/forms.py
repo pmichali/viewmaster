@@ -8,7 +8,7 @@ from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, M
 from django.forms import BooleanField, Textarea, NumberInput, TextInput, TimeInput
 from django.core.exceptions import ValidationError
 
-from .models import Movie
+from .models import ImdbInfo, Movie
 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,73 @@ class MovieFindForm(Form):
         )
 
 
+class MovieImdbCreateEditForm(ModelForm):
+    """Model based form for movie IMDB info."""
+
+    class Meta:  # pylint: disable=too-few-public-methods
+        """Model, fields, and custom widgets for form."""
+
+        model = ImdbInfo
+        fields = [
+            "title",
+            "plot",
+            "actors",
+            "directors",
+            "release",
+            "duration",
+            "rating",
+            "genres",
+            "identifier",
+            "cover_url",
+            "cover_file",
+        ]
+        widgets = {
+            "title": HiddenInput(),
+            "plot": Textarea(attrs={"cols": 60, "rows": 3, "tabindex": -1}),
+            "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
+            "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
+            "release": HiddenInput(),
+            "duration": HiddenInput(),
+            "rating": HiddenInput(),
+            "genres": HiddenInput(),
+            "identifier": TextInput(attrs={"size": 12, "tabindex": -1}),
+            "cover_url": HiddenInput(),
+            "cover_file": HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Enabling tool tips for the form."""
+        logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
+        super().__init__(*args, **kwargs)
+
+        # Set help text...
+        for field in self.fields:
+            help_text = self.fields[field].help_text
+            self.fields[field].help_text = None
+            if help_text != "":
+                self.fields[field].widget.attrs.update(
+                    {
+                        "data-bs-toggle": "tooltip",
+                        "title": help_text,
+                        "data-bs-placement": "right",
+                    }
+                )
+
+    def clean_release(self):
+        """Ensure a four-digit year is entered, that is not in the future."""
+        release = self.cleaned_data["release"]
+        try:
+            release_year = int(release)
+        except ValueError as e:
+            raise ValidationError("must be a four-digit date") from e
+        this_year = datetime.today().year
+        if release_year < 1900:
+            raise ValidationError("date must be greater than 1900")
+        if release_year > this_year:
+            raise ValidationError(f"release date {release_year} is in future")
+        return release
+
+
 class MovieCreateEditForm(ModelForm):
     """Model based form for creating a movie."""
 
@@ -73,9 +140,6 @@ class MovieCreateEditForm(ModelForm):
         model = Movie
         fields = [
             "title",
-            "plot",
-            "actors",
-            "directors",
             "release",
             "rating",
             "category",
@@ -87,22 +151,15 @@ class MovieCreateEditForm(ModelForm):
             "cost",
             "paid",
             "bad",
-            "movie_id",
-            "cover_ref",
         ]
         widgets = {
             "title": TextInput(attrs={"size": 60, "autofocus": True}),
-            "plot": Textarea(attrs={"cols": 60, "rows": 3, "tabindex": -1}),
-            "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
-            "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "release": DateInput(format="%Y", attrs={"size": 6}),
             "duration": TimeInput(format="%H:%M", attrs={"size": 6}),
             "aspect": TextInput(attrs={"size": 10}),
             "audio": TextInput(attrs={"size": 10}),
             "collection": TextInput(attrs={"size": 10}),
             "cost": NumberInput(attrs={"size": 6}),
-            "movie_id": TextInput(attrs={"size": 12, "tabindex": -1}),
-            "cover_ref": HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):

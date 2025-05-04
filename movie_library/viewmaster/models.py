@@ -1,12 +1,16 @@
 """Models for viewmaster app."""
 
+import logging
+
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.urls import reverse
 
 from auditlog.registry import auditlog
 
-from .extractors import CATEGORY_CHOICES, RATING_CHOICES
+from .api import RequestFailed, get_movie
+from .extractors import extract_rating, extract_duration, extract_year
+from .extractors import filter_genres, CATEGORY_CHOICES, RATING_CHOICES
 
 
 FORMAT_CHOICES = [
@@ -15,6 +19,8 @@ FORMAT_CHOICES = [
     ("BR", "BR"),
     ("4K", "4K"),
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class ImdbInfo(models.Model):
@@ -54,6 +60,44 @@ class ImdbInfo(models.Model):
         storage=FileSystemStorage(allow_overwrite=True),
     )
 
+    @classmethod
+    def find_or_retrieve(cls, identifier):
+        """Obtain IMDB info for an identifier, else None."""
+        try:
+            return cls.objects.get(identifier=identifier)
+        except cls.DoesNotExist:
+            return cls.from_lookup(identifier)
+
+    @classmethod
+    def from_lookup(cls, identifier):
+        """Create IMDB info from a request lookup."""
+        logger.info("Looking up IMDB entry %s", identifier)
+        try:
+            details = get_movie(identifier)
+        except RequestFailed as rf:
+            logger.error("Failed to get IMDB info for %s: %s", identifier, rf)
+            return None
+        rating = extract_rating(details.get("Rated", "?"))
+        duration = extract_duration(details.get("Runtime", "?"))
+        release = extract_year(details.get("Year", "?"))
+        genres_list, processing_msgs = filter_genres(details.get("Genre", ""))
+        for msg in processing_msgs:
+            logger.debug(msg)
+        new_imdb = cls(
+            title=details.get("Title", "MISSING TITLE!!!"),
+            release=release,
+            rating=rating,
+            duration=duration,
+            identifier=identifier,
+            plot=details.get("Plot", ""),
+            actors=details.get("Actors", ""),
+            directors=details.get("Director", ""),
+            cover_url=details.get("Poster", ""),
+            genres=genres_list,
+        )
+        logger.debug("New IMDB %s", new_imdb)
+        return new_imdb
+
     @property
     def duration_str(self):
         """Display custom format for duration."""
@@ -66,7 +110,7 @@ class ImdbInfo(models.Model):
     def __str__(self):
         """Show the IMDB info."""
         return (
-            f"identifier-'{self.identifier}' ({self.id}) title='{self.title} "
+            f"identifier-'{self.identifier}' ({self.id}) title='{self.title}' "
             f"plot='{self.plot}' actors='{self.actors}' directors='{self.directors}' "
             f"release={self.release} rating={self.rating} duration={self.duration_str} "
             f"cover_url='{self.cover_url}' cover_file='{self.cover_file.name}' "
@@ -167,6 +211,44 @@ class Movie(models.Model):
         hrs = int(self.duration.strftime("%H"))
         mins = int(self.duration.strftime("%M"))
         return f"{hrs}h {mins}m"
+
+    def detect_overrides_from(self, imdb_info):
+        """Build dict of values overridden from IMDB data."""
+        overridden = {}
+        if imdb_info.rating not in ("?", self.rating):
+            logger.warning(
+                "IMDB entry has MPAA rating %s instead of %s",
+                imdb_info.rating,
+                self.rating,
+            )
+            overridden["rating"] = True
+            overridden["rating_value"] = imdb_info.rating
+        stored_duration = self.duration.strftime("%H:%M")
+        if imdb_info.duration not in ("?", stored_duration):
+            logger.warning(
+                "IMDB entry has duration '%s' instead of '%s'",
+                imdb_info.duration,
+                stored_duration,
+            )
+            overridden["duration"] = True
+            overridden["duration_value"] = imdb_info.duration
+        if imdb_info.release not in ("?", self.release):
+            logger.warning(
+                "IMDB entry has release date %s instead of %s",
+                imdb_info.release,
+                self.release,
+            )
+            overridden["release"] = True
+            overridden["release_value"] = imdb_info.release
+        return overridden
+
+    @classmethod
+    def find(cls, identifier):
+        """Get movie by ID."""
+        try:
+            return cls.objects.get(pk=identifier)
+        except cls.DoesNotExist:
+            return None
 
     def __str__(self):
         """Show the movie entry for debug."""
