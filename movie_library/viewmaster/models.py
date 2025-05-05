@@ -61,12 +61,17 @@ class ImdbInfo(models.Model):
     )
 
     @classmethod
-    def find_or_retrieve(cls, identifier):
-        """Obtain IMDB info for an identifier, else None."""
+    def get(cls, identifier, lookup=False):
+        """Obtain IMDB info. Lookup, if requested and doesn't already exist."""
         try:
-            return cls.objects.get(identifier=identifier)
+            info = cls.objects.get(identifier=identifier)
+            logger.debug("Have existing IMDB info for %s", identifier)
+            return info
         except cls.DoesNotExist:
-            return cls.from_lookup(identifier)
+            if lookup:
+                return cls.from_lookup(identifier)
+            logger.debug("No exisitng IMDB info for %s", identifier)
+            return None
 
     @classmethod
     def from_lookup(cls, identifier):
@@ -97,6 +102,18 @@ class ImdbInfo(models.Model):
         )
         logger.debug("New IMDB %s", new_imdb)
         return new_imdb
+
+    @classmethod
+    def remove_unused(cls, identifier):
+        """Remove the IMDB info, if not used."""
+        if Movie.objects.filter(imdb_info__identifier=identifier).count() > 0:
+            logger.debug("IMDB info %s still in use - keeping", identifier)
+            return
+        try:
+            cls.objects.filter(identifier=identifier).delete()
+            logger.info("Deleting IMDB info %s no longer used - deleting", identifier)
+        except cls.DoesNotExist:
+            logger.warning("Unable to find IMDB info %s to check usage", identifier)
 
     @property
     def duration_str(self):
@@ -249,6 +266,11 @@ class Movie(models.Model):
             return cls.objects.get(pk=identifier)
         except cls.DoesNotExist:
             return None
+
+    @classmethod
+    def uses_imdb_info(cls, identifier):
+        """Indicate if any movie(s) are using this IMDB identifier."""
+        return cls.objects.filter(imdb_info__identifier=identifier).count() > 0
 
     def __str__(self):
         """Show the movie entry for debug."""

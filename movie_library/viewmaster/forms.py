@@ -5,7 +5,15 @@ import logging
 from datetime import datetime
 
 from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, ModelForm
-from django.forms import BooleanField, Textarea, NumberInput, TextInput, TimeInput
+from django.forms import (
+    BooleanField,
+    Textarea,
+    NumberInput,
+    TextInput,
+    TimeInput,
+    IntegerField,
+    TimeField,
+)
 from django.core.exceptions import ValidationError
 
 from .models import ImdbInfo, Movie
@@ -67,31 +75,28 @@ class MovieFindForm(Form):
 class MovieImdbCreateEditForm(ModelForm):
     """Model based form for movie IMDB info."""
 
+    imdb_title = CharField(max_length=60, widget=HiddenInput())
+    imdb_release = IntegerField(widget=HiddenInput())
+    imdb_rating = CharField(max_length=5, widget=HiddenInput())
+    imdb_duration = TimeField(widget=HiddenInput())
+
     class Meta:  # pylint: disable=too-few-public-methods
         """Model, fields, and custom widgets for form."""
 
         model = ImdbInfo
         fields = [
-            "title",
             "plot",
             "actors",
             "directors",
-            "release",
-            "duration",
-            "rating",
             "genres",
             "identifier",
             "cover_url",
             "cover_file",
         ]
         widgets = {
-            "title": HiddenInput(),
             "plot": Textarea(attrs={"cols": 60, "rows": 3, "tabindex": -1}),
             "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
-            "release": HiddenInput(),
-            "duration": HiddenInput(),
-            "rating": HiddenInput(),
             "genres": HiddenInput(),
             "identifier": TextInput(attrs={"size": 12, "tabindex": -1}),
             "cover_url": HiddenInput(),
@@ -100,7 +105,7 @@ class MovieImdbCreateEditForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         """Enabling tool tips for the form."""
-        logger.debug("Init function ARGS %s KWARGS %s", args, kwargs)
+        logger.debug("IMDB Init function ARGS %s KWARGS %s", args, kwargs)
         super().__init__(*args, **kwargs)
 
         # Set help text...
@@ -118,7 +123,7 @@ class MovieImdbCreateEditForm(ModelForm):
 
     def clean_release(self):
         """Ensure a four-digit year is entered, that is not in the future."""
-        release = self.cleaned_data["release"]
+        release = self.cleaned_data["imdb_release"]
         try:
             release_year = int(release)
         except ValueError as e:
