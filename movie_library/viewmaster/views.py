@@ -265,16 +265,20 @@ class MovieCreateUpdateView(
             for k, v in request.POST.items()
             if k in MovieCreateEditForm.Meta.fields
         }
-        logger.debug("Movie params: %s", movie_changes)
+        logger.debug("Movie request: %s", movie_changes)
         return movie_changes
 
-    def get_imdb_info(self, request) -> dict:
+    def get_imdb_changes(self, request) -> dict:
         """Obtain all the IMDB info provided in request."""
         imdb_changes = {
             k: v
             for k, v in request.POST.items()
             if k in MovieImdbCreateEditForm.base_fields
         }
+        imdb_changes["title"] = imdb_changes.get("imdb_title")
+        imdb_changes["release"] = imdb_changes.get("imdb_release")
+        imdb_changes["rating"] = imdb_changes.get("imdb_rating")
+        imdb_changes["duration"] = imdb_changes.get("imdb_duration")
         if imdb_changes.get("cover_url"):
             if not imdb_changes["cover_url"].startswith("http"):
                 logger.warning(
@@ -282,7 +286,7 @@ class MovieCreateUpdateView(
                     imdb_changes["cover_url"],
                 )
                 imdb_changes["cover_url"] = ""
-        logger.debug("IMDB params: %s", imdb_changes)
+        logger.debug("IMDB request: %s", imdb_changes)
         return imdb_changes
 
     def post(self, request, *args, **kwargs):
@@ -309,15 +313,23 @@ class MovieCreateUpdateView(
         else:
             imdb_id = request.POST.get("identifier", "unknown")
             logger.debug("IMDB ID '%s' selected", imdb_id)
-        imdb_info = ImdbInfo.get(imdb_id)
-        logger.debug("Existing IMDB info: %s", imdb_info or "NONE")
-        imdb_changes = self.get_imdb_info(imdb_id)
+        imdb_changes = {}
+        if imdb_id == "unknown":
+            logger.debug("No IMDB info")
+            imdb_info = None
+        else:
+            imdb_info = ImdbInfo.get(imdb_id)
+            if not imdb_info:
+                imdb_changes = self.get_imdb_changes(request)
+                logger.debug("Using IMDB info from request: %s", imdb_changes)
+            else:
+                logger.debug("Existing IMDB info: %s", imdb_info)
         imdb_form = MovieImdbCreateEditForm(imdb_changes, instance=imdb_info)
 
         if movie_form.is_valid() and imdb_form.is_valid():
             if imdb_id != "unknown":
                 if not imdb_info:
-                    logger.debug("New IMDB info")
+                    logger.debug("New IMDB info %s", imdb_form)
                     imdb_info = imdb_form.save()
                 else:
                     logger.debug("Existing IMDB info")
@@ -378,7 +390,7 @@ class MovieCreateUpdateView(
             imdb_initial.update(
                 {
                     "imdb_title": imdb_info.title,
-                    "imdb_releaase": imdb_info.release,
+                    "imdb_release": imdb_info.release,
                     "imdb_rating": imdb_info.rating,
                     "imdb_duration": imdb_info.duration,
                 }

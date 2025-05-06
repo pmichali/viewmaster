@@ -76,9 +76,9 @@ class MovieImdbCreateEditForm(ModelForm):
     """Model based form for movie IMDB info."""
 
     imdb_title = CharField(max_length=60, widget=HiddenInput())
-    imdb_release = IntegerField(widget=HiddenInput())
+    imdb_release = IntegerField(widget=DateInput(format="%Y", attrs={"size": 6, "type": "hidden"}))
     imdb_rating = CharField(max_length=5, widget=HiddenInput())
-    imdb_duration = TimeField(widget=HiddenInput())
+    imdb_duration = TimeField(widget=TimeInput(format="%H:%M", attrs={"size": 6, "type": "hidden"}))
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Model, fields, and custom widgets for form."""
