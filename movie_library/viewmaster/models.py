@@ -26,20 +26,20 @@ logger = logging.getLogger(__name__)
 class ImdbInfo(models.Model):
     """IMDB information for a movie (or series of movies)."""
 
-    title = models.CharField(
+    title_name = models.CharField(
         max_length=60, help_text="Up to 60 characters for title. May be overridden."
     )
-    release = models.IntegerField(
+    release_date = models.IntegerField(
         help_text="Four digit year of release. May be overridden."
     )
     genres = models.CharField(help_text="List of genres applicable to the movie.")
-    rating = models.CharField(
+    mpaa_rating = models.CharField(
         max_length=5,
         default="?",
         choices=RATING_CHOICES,
         help_text="Select the MPAA rating. May be overridden.",
     )
-    duration = models.TimeField(
+    run_time = models.TimeField(
         help_text="Duration in hh:mm format. May be overridden."
     )
 
@@ -89,10 +89,10 @@ class ImdbInfo(models.Model):
         for msg in processing_msgs:
             logger.debug(msg)
         new_imdb = cls(
-            title=details.get("Title", "MISSING TITLE!!!"),
-            release=release,
-            rating=rating,
-            duration=duration,
+            title_name=details.get("Title", "MISSING TITLE!!!"),
+            release_date=release,
+            mpaa_rating=rating,
+            run_time=duration,
             identifier=identifier,
             plot=details.get("Plot", ""),
             actors=details.get("Actors", ""),
@@ -118,19 +118,25 @@ class ImdbInfo(models.Model):
     @property
     def duration_str(self):
         """Display custom format for duration."""
-        if not self.duration:
+        if not self.run_time:
             return "?"
-        hrs = int(self.duration.strftime("%H"))
-        mins = int(self.duration.strftime("%M"))
+        hrs = int(self.run_time.strftime("%H"))
+        mins = int(self.run_time.strftime("%M"))
         return f"{hrs}h {mins}m"
 
     def __str__(self):
         """Show the IMDB info."""
         return (
-            f"identifier-'{self.identifier}' ({self.id}) title='{self.title}' "
-            f"plot='{self.plot}' actors='{self.actors}' directors='{self.directors}' "
-            f"release={self.release} rating={self.rating} duration={self.duration_str} "
-            f"cover_url='{self.cover_url}' cover_file='{self.cover_file.name}' "
+            f"identifier='{self.identifier}' ({self.id}) "
+            f"title_name='{self.title_name}' "
+            f"plot='{self.plot}' "
+            f"actors='{self.actors}' "
+            f"directors='{self.directors}' "
+            f"release_date={self.release_date} "
+            f"mpaa_rating={self.mpaa_rating} "
+            f"run_time={self.duration_str} "
+            f"cover_url='{self.cover_url}' "
+            f"cover_file='{self.cover_file.name}' "
             f"genres='{self.genres}'"
         )
 
@@ -232,31 +238,32 @@ class Movie(models.Model):
     def detect_overrides_from(self, imdb_info):
         """Build dict of values overridden from IMDB data."""
         overridden = {}
-        if imdb_info.rating not in ("?", self.rating):
+        if imdb_info.mpaa_rating not in ("?", self.rating):
             logger.warning(
                 "IMDB entry has MPAA rating %s instead of %s",
-                imdb_info.rating,
+                imdb_info.mpaa_rating,
                 self.rating,
             )
             overridden["rating"] = True
-            overridden["rating_value"] = imdb_info.rating
+            overridden["rating_value"] = imdb_info.mpaa_rating
         stored_duration = self.duration.strftime("%H:%M")
-        if imdb_info.duration not in ("?", stored_duration):
+        imdb_duration = imdb_info.run_time.strftime("%H:%M")
+        if imdb_duration not in ("?", stored_duration):
             logger.warning(
                 "IMDB entry has duration '%s' instead of '%s'",
-                imdb_info.duration,
+                imdb_duration,
                 stored_duration,
             )
             overridden["duration"] = True
-            overridden["duration_value"] = imdb_info.duration
-        if imdb_info.release not in ("?", self.release):
+            overridden["duration_value"] = imdb_duration
+        if imdb_info.release_date not in ("?", self.release):
             logger.warning(
                 "IMDB entry has release date %s instead of %s",
-                imdb_info.release,
+                imdb_info.release_date,
                 self.release,
             )
             overridden["release"] = True
-            overridden["release_value"] = imdb_info.release
+            overridden["release_value"] = imdb_info.release_date
         return overridden
 
     @classmethod

@@ -11,8 +11,6 @@ from django.forms import (
     NumberInput,
     TextInput,
     TimeInput,
-    IntegerField,
-    TimeField,
 )
 from django.core.exceptions import ValidationError
 
@@ -75,16 +73,15 @@ class MovieFindForm(Form):
 class MovieImdbCreateEditForm(ModelForm):
     """Model based form for movie IMDB info."""
 
-    imdb_title = CharField(max_length=60, widget=HiddenInput())
-    imdb_release = IntegerField(widget=DateInput(format="%Y", attrs={"size": 6, "type": "hidden"}))
-    imdb_rating = CharField(max_length=5, widget=HiddenInput())
-    imdb_duration = TimeField(widget=TimeInput(format="%H:%M", attrs={"size": 6, "type": "hidden"}))
-
     class Meta:  # pylint: disable=too-few-public-methods
         """Model, fields, and custom widgets for form."""
 
         model = ImdbInfo
         fields = [
+            "title_name",
+            "release_date",
+            "mpaa_rating",
+            "run_time",
             "plot",
             "actors",
             "directors",
@@ -94,6 +91,10 @@ class MovieImdbCreateEditForm(ModelForm):
             "cover_file",
         ]
         widgets = {
+            "title_name": HiddenInput(),
+            "release_date": DateInput(format="%Y", attrs={"size": 6, "type": "hidden"}),
+            "mpaa_rating": HiddenInput(),
+            "run_time": TimeInput(format="%H:%M", attrs={"size": 6, "type": "hidden"}),
             "plot": Textarea(attrs={"cols": 60, "rows": 3, "tabindex": -1}),
             "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "directors": TextInput(attrs={"size": 60, "tabindex": -1}),

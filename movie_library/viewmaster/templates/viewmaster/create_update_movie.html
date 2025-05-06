@@ -19,6 +19,7 @@
         <tr>
             <td colspan="6">
               {{ form.non_field_errors }}
+              {{ imdb_form.non_field_errors }}
             </td>
         </tr>
      	<tr>
@@ -150,6 +151,7 @@
       		</th>
       		<td colspan="2">
       		  {{ imdb_form.identifier }}
+      		  {{ imdb_form.identifier.errors }}
       		</td>
       		<td rowspan="2">
      		  {% if "http" in imdb_form.cover_url.value %}
@@ -186,10 +188,10 @@
    	  {{ imdb_form.genres }}
    	  {{ imdb_form.cover_url }}
    	  {{ imdb_form.cover_file }}
-   	  {{ imdb_form.imdb_duration }}
-   	  {{ imdb_form.imdb_rating }}
-   	  {{ imdb_form.imdb_release }}
-   	  {{ imdb_form.imdb_title }}
+   	  {{ imdb_form.run_time }}
+   	  {{ imdb_form.mpaa_rating }}
+   	  {{ imdb_form.release_date }}
+   	  {{ imdb_form.title_name }}
    	  </p> 
       <input id="save" type="submit" value="Save" class="btn btn-primary">
       <button class="btn btn-warning" onclick="javascript:history.back();">Back</button>

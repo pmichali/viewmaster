@@ -137,7 +137,7 @@
 		        <div class="col-lg-7{% if movie.bad %} bad{% endif %}">{{ movie.title }}</div>
 		        <div class="col-lg">{{ movie.rating }}</div>
 		        <div class="col-lg">{{ movie.category }}</div>
-		        <div class="col-lg">{{ movie.movie_id }}</div>
+		        <div class="col-lg">{% identifier movie.imdb_info %}</div>
 		        <div class="col-lg">{{ movie.release }}</div>
 		        <div class="col-lg">{{ movie.duration_str }}</div>
 		      </div>
