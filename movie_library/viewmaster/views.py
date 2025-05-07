@@ -308,18 +308,17 @@ class MovieCreateUpdateView(
             imdb_id = "unknown"
         else:
             imdb_id = request.POST.get("identifier", "unknown")
-            logger.debug("IMDB ID '%s' selected", imdb_id)
+            logger.debug("IMDB ID '%s'", imdb_id)
         if imdb_id == "unknown":
             logger.debug("No IMDB info")
             imdb_info = None
-            imdb_changes = {}
         else:
             imdb_info = ImdbInfo.get(imdb_id)
             logger.debug(
                 "For IMDB info using %s",
                 "existing info" if imdb_info else "request data",
             )
-            imdb_changes = self.get_imdb_changes(request)
+        imdb_changes = self.get_imdb_changes(request)
         imdb_form = MovieImdbCreateEditForm(imdb_changes, instance=imdb_info)
         # logger.debug("FORM %s", imdb_form)
 
@@ -341,9 +340,9 @@ class MovieCreateUpdateView(
             logger.debug("Save completed")
             return HttpResponseRedirect(self.success_url)
         logger.info(
-            "Movie validation %s, IMDB validation %s",
-            "Passed" if movie_form.is_valid() else "Failed",
-            "Passed" if imdb_form.is_valid() else "Failed",
+            "Movie validation errors %s, IMDB validation errors %s",
+            movie_form.errors,
+            imdb_form.errors,
         )
         return render(
             request,
@@ -358,7 +357,7 @@ class MovieCreateUpdateView(
     def get_movie_info(self, movie_id: str) -> ImdbInfo:
         """Get/lookup IMDB info if ID provided."""
         if movie_id == "unknown":
-            return {}
+            return None
         imdb_info = ImdbInfo.get(movie_id, lookup=True)
         logger.debug("Have %s", imdb_info)
         return imdb_info
@@ -388,8 +387,19 @@ class MovieCreateUpdateView(
         initial.update({"category_choices": order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial, instance=movie)
+        if imdb_info:
+            imdb_initial = {}
+        else:
+            imdb_initial = {
+                "identifier": "unknown",
+                "release_date": "0",
+                "mpaa_rating": "?",
+                "run_time": "0:00",
+                "genres": "?",
+                "title_name": "?",
+            }
         logger.debug("Initial IMDB info %s", imdb_info)
-        imdb_form = MovieImdbCreateEditForm(initial={}, instance=imdb_info)
+        imdb_form = MovieImdbCreateEditForm(initial=imdb_initial, instance=imdb_info)
         return (form, imdb_form, overridden)
 
     def get(self, request, *args, **kwargs):
