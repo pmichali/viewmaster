@@ -1,7 +1,6 @@
 """Form definitions for viewmaster."""
 
 import logging
-
 from datetime import datetime
 
 from django.forms import CharField, ChoiceField, DateInput, Form, HiddenInput, ModelForm
@@ -99,7 +98,9 @@ class MovieImdbCreateEditForm(ModelForm):
             "actors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "directors": TextInput(attrs={"size": 60, "tabindex": -1}),
             "genres": HiddenInput(),
-            "identifier": TextInput(attrs={"size": 12, "tabindex": -1}),
+            "identifier": TextInput(
+                attrs={"size": 12, "tabindex": -1, "readonly": True}
+            ),
             "cover_url": HiddenInput(),
             "cover_file": HiddenInput(),
         }
@@ -135,6 +136,14 @@ class MovieImdbCreateEditForm(ModelForm):
         if release_year > this_year:
             raise ValidationError(f"release date {release_year} is in future")
         return release
+
+    def save(self, commit=True):
+        """Save model and create file, if possible."""
+        instance = super().save(commit=False)
+        instance.create_cover_file()
+        if commit:
+            instance.save()
+        return instance
 
 
 class MovieCreateEditForm(ModelForm):

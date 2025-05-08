@@ -1,7 +1,12 @@
 """Models for viewmaster app."""
 
 import logging
+import os
 
+from urllib.parse import urlparse
+import requests
+
+from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.urls import reverse
@@ -21,6 +26,13 @@ FORMAT_CHOICES = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def get_ext(url):
+    """Get the file (image) extension, from the URL."""
+    parsed = urlparse(url)
+    _, ext = os.path.splitext(parsed.path)
+    return ext
 
 
 class ImdbInfo(models.Model):
@@ -113,10 +125,37 @@ class ImdbInfo(models.Model):
             logger.debug("IMDB info %s still in use - keeping", imdb_id)
             return
         try:
-            cls.objects.filter(pk=imdb_id).delete()
+            instance = cls.objects.get(pk=imdb_id)
+            if os.path.exists(instance.cover_file.path):
+                os.remove(instance.cover_file.path)
+                logger.debug("Removed cover file %s", instance.cover_file.name)
+            instance.delete()
             logger.info("Deleting IMDB info %s no longer used - deleting", imdb_id)
         except cls.DoesNotExist:
             logger.warning("Unable to find IMDB info %s to check usage", imdb_id)
+
+    def create_cover_file(self):
+        """Create cover file for IMDB Info."""
+        if self.cover_url.startswith("http"):
+            file_name = f"{self.identifier}{get_ext(self.cover_url)}"
+            results = requests.get(self.cover_url, timeout=30)
+            if results.status_code != requests.codes.OK:
+                logger.warning(
+                    "Unable to read cover URL (%s) for IMDB %s",
+                    self.cover_url,
+                    self.identifier,
+                )
+            else:
+                self.cover_file.save(file_name, ContentFile(results.content))
+                logger.info(
+                    "Saved cover for %s locally as %s", self.identifier, file_name
+                )
+        else:
+            logger.debug(
+                "Cover URL (%s) is not valid for IMDB %s",
+                self.cover_url,
+                self.identifier,
+            )
 
     @property
     def duration_str(self):

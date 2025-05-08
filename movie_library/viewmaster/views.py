@@ -230,11 +230,6 @@ class MovieFindResultsView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-# def bad_url(cover_ref):
-#     """If present, does simple check to see if URL is valid"""
-#     return cover_ref and not cover_ref.startswith("http")
-
-
 class MovieCreateUpdateView(
     LoginRequiredMixin,
     SingleObjectTemplateResponseMixin,
@@ -247,16 +242,6 @@ class MovieCreateUpdateView(
     template_name = "viewmaster/create_update_movie.html"
     form_class = MovieCreateEditForm
     success_url = reverse_lazy("viewmaster:movie-list")
-
-    # def bad_cover_ref(self, post_data):
-    #     """Check to see if current or to be changed cover URL is valid."""
-    #     if bad_url(post_data.get("cover_ref")):
-    #         logger.debug("Cover URL being set is invalid (%s)", post_data["cover_ref"])
-    #         return True
-    #     if self.object and bad_url(self.object.cover_ref):
-    #         logger.debug("Existing cover URL is not valid (%s)", self.object.cover_ref)
-    #         return True
-    #     return False
 
     def get_movie_changes(self, request):
         """Obtain all the movie changes from request."""
@@ -323,36 +308,39 @@ class MovieCreateUpdateView(
         imdb_form = MovieImdbCreateEditForm(imdb_changes, instance=imdb_info)
 
         if movie_form.is_valid():
-            if imdb_identifier == "unknown":  # Not existing or clearing IMDB info
-                previous_imdb_id = (
-                    movie.imdb_info.id if movie and movie.imdb_info else None
-                )
-                saved_movie = movie_form.save(commit=False)
-                saved_movie.imdb_info = None
-                saved_movie.save()
-                ImdbInfo.remove_unused(previous_imdb_id)
-                logger.debug("Save completed")
-                return HttpResponseRedirect(self.success_url)
+            previous_imdb_id = None
+            if imdb_identifier == "unknown":
+                if movie and movie.imdb_info:
+                    previous_imdb_id = movie.imdb_info.id
+                logger.debug("No IMDB info or being cleared")
             else:  # Specifying IMDB info
                 if not imdb_info:  # New IMDB info
                     if imdb_form.is_valid():
                         imdb_info = imdb_form.save()
                         logger.debug("Saved new IMDB info %s", imdb_info)
-                        saved_movie = movie_form.save(commit=False)
-                        saved_movie.imdb_info = imdb_info
-                        saved_movie.save()
-                        logger.debug("Save completed")
-                        return HttpResponseRedirect(self.success_url)
                     else:  # Bad IMDB info
                         logging.error("IMDB form failed validation")
+                        return render(
+                            request,
+                            self.template_name,
+                            {
+                                "form": movie_form,
+                                "imdb_form": imdb_form,
+                                "movie": None,
+                            },
+                        )
                 else:  # Existing IMDB info
-                    saved_movie = movie_form.save(commit=False)
-                    saved_movie.imdb_info = imdb_info  # In case new movie
-                    saved_movie.save()
-                    logger.debug("Save completed")
-                    return HttpResponseRedirect(self.success_url)
-        else:
-            logging.error("Movie form failed validation")
+                    if imdb_info.cover_url and not imdb_info.cover_file:
+                        logger.debug("Trying to store cover file")
+                        imdb_info.create_cover_file()
+                    logger.debug("Existing IMDB info")
+            saved_movie = movie_form.save(commit=False)
+            saved_movie.imdb_info = imdb_info
+            saved_movie.save()
+            ImdbInfo.remove_unused(previous_imdb_id)
+            logger.info("Save completed")
+            return HttpResponseRedirect(self.success_url)
+        logging.error("Movie form failed validation")
         return render(
             request,
             self.template_name,
