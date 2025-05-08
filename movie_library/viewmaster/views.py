@@ -326,17 +326,19 @@ class MovieCreateUpdateView(
             if imdb_id != "unknown":
                 if not imdb_info:
                     imdb_info = imdb_form.save()
-                    logger.debug("New IMDB info %s", imdb_info)
+                    logger.debug("Saved new IMDB info %s", imdb_info)
                 else:
-                    logger.debug("Existing IMDB info")
+                    logger.debug("Existing IMDB info in database")
             else:  # No IMDB selected
                 logger.debug("No IMDB info selected")
+            previous_imdb_id = (
+                movie.imdb_info.identifier if movie and movie.imdb_info else None
+            )
             saved_movie = movie_form.save(commit=False)
             saved_movie.imdb_info = imdb_info
             logger.debug("Set movie IMDB info to %s", imdb_info)
             saved_movie.save()
-            if movie and movie.imdb_info:
-                ImdbInfo.remove_unused(movie.imdb_info.identifier)
+            ImdbInfo.remove_unused(previous_imdb_id)
             logger.debug("Save completed")
             return HttpResponseRedirect(self.success_url)
         logger.info(
@@ -366,6 +368,7 @@ class MovieCreateUpdateView(
         """Setup initial values and overrides."""
         initial = {}
         overridden = {}
+        suggested_genres = ""
         if not movie:  # New movie
             if imdb_info:
                 initial.update(
@@ -382,8 +385,9 @@ class MovieCreateUpdateView(
                 suggested_genres = ""
         else:
             initial["genre"] = movie.category.upper()
-            overridden = movie.detect_overrides_from(imdb_info)
-            suggested_genres = imdb_info.genres
+            if imdb_info:
+                overridden = movie.detect_overrides_from(imdb_info)
+                suggested_genres = imdb_info.genres
         initial.update({"category_choices": order_genre_choices(suggested_genres)})
         logger.debug("Initial values: %s", initial)
         form = self.form_class(initial=initial, instance=movie)
@@ -508,7 +512,12 @@ class MovieDeleteView(
             kwargs,
         )
         self.success_url = reverse("viewmaster:movie-list")
-        return super().post(request, *args, **kwargs)
+        identifier = kwargs.get("pk", 0)
+        imdb_id = Movie.get_imdb_id(identifier)
+        logger.debug("Deleting movie with ID %d (IMDB ID %s)", identifier, imdb_id)
+        result = super().post(request, *args, **kwargs)
+        ImdbInfo.remove_unused(imdb_id)
+        return result
 
 
 class MovieClearView(

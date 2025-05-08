@@ -104,16 +104,19 @@ class ImdbInfo(models.Model):
         return new_imdb
 
     @classmethod
-    def remove_unused(cls, identifier):
+    def remove_unused(cls, imdb_id):
         """Remove the IMDB info, if not used."""
-        if Movie.objects.filter(imdb_info__identifier=identifier).count() > 0:
-            logger.debug("IMDB info %s still in use - keeping", identifier)
+        if not imdb_id:
+            logger.debug("No IMDB ID - delete check skipped")
+            return
+        if Movie.objects.filter(imdb_info__id=imdb_id).count() > 0:
+            logger.debug("IMDB info %s still in use - keeping", imdb_id)
             return
         try:
-            cls.objects.filter(identifier=identifier).delete()
-            logger.info("Deleting IMDB info %s no longer used - deleting", identifier)
+            cls.objects.filter(pk=imdb_id).delete()
+            logger.info("Deleting IMDB info %s no longer used - deleting", imdb_id)
         except cls.DoesNotExist:
-            logger.warning("Unable to find IMDB info %s to check usage", identifier)
+            logger.warning("Unable to find IMDB info %s to check usage", imdb_id)
 
     @property
     def duration_str(self):
@@ -273,6 +276,14 @@ class Movie(models.Model):
             return cls.objects.get(pk=identifier)
         except cls.DoesNotExist:
             return None
+
+    @classmethod
+    def get_imdb_id(cls, identifier):
+        """Provide the IMDB info ID, if it exists."""
+        movie = cls.find(identifier)
+        if not movie or not movie.imdb_info:
+            return None
+        return movie.imdb_info.id
 
     @classmethod
     def uses_imdb_info(cls, identifier):
