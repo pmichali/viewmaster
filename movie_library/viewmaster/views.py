@@ -300,52 +300,59 @@ class MovieCreateUpdateView(
         movie_changes = self.get_movie_changes(request)
         movie_form = MovieCreateEditForm(movie_changes, instance=movie)
 
-        if "save_and_clear" in request.POST:
+        if "save_and_clear" in request.POST:  # Forcing clear of IMDB info
             self.success_url = reverse(
                 "viewmaster:movie-clear", kwargs={"pk": identifier}
             )
             logger.debug("User selected to clear IMDB info")
-            imdb_id = "unknown"
-        else:
-            imdb_id = request.POST.get("identifier", "unknown")
-            logger.debug("IMDB ID '%s'", imdb_id)
-        if imdb_id == "unknown":
+            imdb_identifier = "unknown"
+        else:  # see if user requested IMDB info
+            imdb_identifier = request.POST.get("identifier", "unknown")
+            logger.debug("IMDB ID '%s'", imdb_identifier)
+
+        if imdb_identifier == "unknown":
             logger.debug("No IMDB info")
             imdb_info = None
         else:
-            imdb_info = ImdbInfo.get(imdb_id)
-            logger.debug(
-                "For IMDB info using %s",
-                "existing info" if imdb_info else "request data",
-            )
+            imdb_info = ImdbInfo.get(imdb_identifier)
+            if not imdb_info:
+                logger.debug("Using request data for IMDB info: %s", imdb_identifier)
+            else:
+                logger.debug("Using existing IMDB info for %s", imdb_identifier)
         imdb_changes = self.get_imdb_changes(request)
         imdb_form = MovieImdbCreateEditForm(imdb_changes, instance=imdb_info)
-        # logger.debug("FORM %s", imdb_form)
 
-        if movie_form.is_valid() and imdb_form.is_valid():
-            if imdb_id != "unknown":
-                if not imdb_info:
-                    imdb_info = imdb_form.save()
-                    logger.debug("Saved new IMDB info %s", imdb_info)
-                else:
-                    logger.debug("Existing IMDB info in database")
-            else:  # No IMDB selected
-                logger.debug("No IMDB info selected")
-            previous_imdb_id = (
-                movie.imdb_info.identifier if movie and movie.imdb_info else None
-            )
-            saved_movie = movie_form.save(commit=False)
-            saved_movie.imdb_info = imdb_info
-            logger.debug("Set movie IMDB info to %s", imdb_info)
-            saved_movie.save()
-            ImdbInfo.remove_unused(previous_imdb_id)
-            logger.debug("Save completed")
-            return HttpResponseRedirect(self.success_url)
-        logger.info(
-            "Movie validation errors %s, IMDB validation errors %s",
-            movie_form.errors,
-            imdb_form.errors,
-        )
+        if movie_form.is_valid():
+            if imdb_identifier == "unknown":  # Not existing or clearing IMDB info
+                previous_imdb_id = (
+                    movie.imdb_info.id if movie and movie.imdb_info else None
+                )
+                saved_movie = movie_form.save(commit=False)
+                saved_movie.imdb_info = None
+                saved_movie.save()
+                ImdbInfo.remove_unused(previous_imdb_id)
+                logger.debug("Save completed")
+                return HttpResponseRedirect(self.success_url)
+            else:  # Specifying IMDB info
+                if not imdb_info:  # New IMDB info
+                    if imdb_form.is_valid():
+                        imdb_info = imdb_form.save()
+                        logger.debug("Saved new IMDB info %s", imdb_info)
+                        saved_movie = movie_form.save(commit=False)
+                        saved_movie.imdb_info = imdb_info
+                        saved_movie.save()
+                        logger.debug("Save completed")
+                        return HttpResponseRedirect(self.success_url)
+                    else:  # Bad IMDB info
+                        logging.error("IMDB form failed validation")
+                else:  # Existing IMDB info
+                    saved_movie = movie_form.save(commit=False)
+                    saved_movie.imdb_info = imdb_info  # In case new movie
+                    saved_movie.save()
+                    logger.debug("Save completed")
+                    return HttpResponseRedirect(self.success_url)
+        else:
+            logging.error("Movie form failed validation")
         return render(
             request,
             self.template_name,
