@@ -1,38 +1,4 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: viewmaster-service
-  namespace: viewmaster
-  labels:
-    app: viewmaster
-spec:
-  ports:
-    - port: 8000
-      name: http
-      targetPort: 8080
-  selector:
-    app: viewmaster
-    tier: app
-  type: LoadBalancer
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: viewmaster-app-pvc
-  namespace: viewmaster
-  labels:
-    app: viewmaster
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-
----
-
+# deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,9 +23,12 @@ spec:
         - name: viewmaster-app-data
           persistentVolumeClaim:
             claimName: viewmaster-app-pvc
+        - name: nginx-config
+          configMap:
+            name: viewmaster-nginx-config
       containers:
-        - image: pmichali/viewmaster-app:v0.2.3
-          imagePullPolicy: Always  # IfNotPresent
+        - image: pmichali/viewmaster-app:v0.3.0
+          imagePullPolicy: Always
           name: app
           ports:
             - containerPort: 8080
@@ -68,10 +37,20 @@ spec:
             - name: viewmaster-app-data
               mountPath: /vol/web
           envFrom:
-          - secretRef:
-              name: viewmaster-secrets
-          - configMapRef:
-              name: viewmaster-cm
+            - secretRef:
+                name: viewmaster-secrets
+            - configMapRef:
+                name: viewmaster-cm
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+              name: nginx
+          volumeMounts:
+            - name: viewmaster-app-data
+              mountPath: /vol/web
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
 
         # - image: pmichali/viewmaster-proxy:latest
         #   imagePullPolicy: Always

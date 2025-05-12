@@ -1,0 +1,20 @@
+# nginx-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: viewmaster-nginx-config
+  namespace: viewmaster
+data:
+  default.conf: |
+    server {
+        listen 80;  # Nginx listens on port 80
+        location /media/ {
+            alias /vol/web/media/;  # Serve media files from PVC
+        }
+        location / {
+            proxy_pass http://localhost:8080;  # Proxy to Gunicorn on 8080
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+    }
