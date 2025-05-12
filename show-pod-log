@@ -1,1 +1,7 @@
-kubectl logs -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1`
+#!/bin/bash
+if [ $# -eq 0 ]; then
+    WHICH="-c app"
+else
+    WHICH="-c $1"
+fi
+kubectl logs -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1` ${WHICH}

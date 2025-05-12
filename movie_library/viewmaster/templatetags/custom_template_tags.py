@@ -21,7 +21,7 @@ def movie_cover(movie):
     info = movie.imdb_info
     if not info:
         logger.debug("Movie '%s' does not have any IMDB info", movie.title)
-        source = f"/{STATIC_URL}viewmaster/no-image.png"
+        source = f"{STATIC_URL}viewmaster/no-image.png"
     elif info.cover_file:
         source = f"{MEDIA_URL}{info.cover_file}"
     elif info.cover_url.startswith("http"):
@@ -39,7 +39,7 @@ def movie_cover(movie):
             info.identifier,
             info.cover_url,
         )
-        source = f"/{STATIC_URL}viewmaster/no-imdb.png"
+        source = f"{STATIC_URL}viewmaster/no-imdb.png"
     return mark_safe(f'{css_clause} src="{source}"')
 
 

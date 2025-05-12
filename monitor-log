@@ -1,5 +1,13 @@
+#!/bin/bash
+if [ $# -eq 0 ]; then
+    WHICH="-c app"
+else
+    WHICH="-c $1"
+fi
+echo "Waiting for running pod..."
 until [ "`kubectl get pods -n viewmaster -l tier=app -o jsonpath='{.items[*].status.phase}'`" == "Running" ]
 do
 	sleep 5
 done
-kubectl logs -f -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1`
+echo "Monitoring log..."
+kubectl logs -f -n viewmaster `kubectl get pod -n viewmaster -l tier=app | cut -f1 -d" " | tail -1` ${WHICH}

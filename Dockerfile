@@ -25,7 +25,7 @@ WORKDIR /code
 COPY README.txt poetry.lock pyproject.toml runserver.bash /code/
 COPY movie_library/ /code/movie_library/
 
-RUN chmod +x /code.runserver.bash
+RUN chmod +x /code/runserver.bash
 
 # setup tools for environment, using pyproject.toml file
 RUN poetry config virtualenvs.create false && \
