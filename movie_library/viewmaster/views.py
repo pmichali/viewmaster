@@ -551,11 +551,6 @@ class MovieClearView(
         identifier = int(kwargs.get("pk", "0"))
         movie = Movie.objects.get(pk=identifier)
         logger.debug("Movie to clear %s (%d)", movie, identifier)
-        movie.movie_id = "unknown"
-        movie.plot = ""
-        movie.actors = ""
-        movie.directors = ""
-        movie.cover_ref = ""
         self.object = movie  # pylint: disable=attribute-defined-outside-init
         form = self.form_class(initial={}, instance=movie)
         return render(request, self.template_name, {"form": form, "movie": movie})

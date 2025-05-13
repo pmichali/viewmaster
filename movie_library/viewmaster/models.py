@@ -331,14 +331,15 @@ class Movie(models.Model):
 
     def __str__(self):
         """Show the movie entry for debug."""
+        imdb_id = self.imdb_info.id if self.imdb_info else None
         return (
-            f"title='{self.title}' ({self.id}) plot='{self.plot}' actors='{self.actors}' "
-            f"directors='{self.directors}' cat={self.category} release={self.release} "
-            f"rating={self.rating} duration={self.duration_str} format={self.format} "
-            f"aspect='{self.aspect}' audio='{self.audio}' coll='{self.collection}' "
-            f"movie_id={self.movie_id} cost=${self.cost:6.2f} "
+            f"title='{self.title}' ({self.id}) "
+            f"cat={self.category} release={self.release} "
+            f"rating={self.rating} duration={self.duration_str} "
+            f"format={self.format} aspect='{self.aspect}' "
+            f"audio='{self.audio}' coll='{self.collection}' "
+            f"imdb_id={imdb_id} cost=${self.cost:6.2f} "
             f"paid={'y' if self.paid else 'N'} bad={'Y' if self.bad else 'N'} "
-            f"cover_ref={self.cover_ref}"
         )
 
 

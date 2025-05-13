@@ -129,7 +129,7 @@
 	      {% if form.show_details.value %}
 		    <div class="cover">
 		      <div>
-		        <img {% movie_cover movie.imdb_info %} width="75" alt="cover" />
+		        <img {% movie_cover movie.imdb_info movie.title %} width="75" alt="cover" />
 		      </div>
 		    </div>
 		    <div class="col-lg-12 rest">
