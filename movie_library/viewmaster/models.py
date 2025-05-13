@@ -221,19 +221,6 @@ class Movie(models.Model):
         default=False,
         help_text="Indicates that movie is not playable, or has playback issues.",
     )
-    # New fields...
-    plot = models.CharField(blank=True, default="", help_text="Plot summary (imported)")
-    actors = models.CharField(blank=True, default="", help_text="Top cast (imported)")
-    directors = models.CharField(
-        blank=True, default="", help_text="Director(s) (imported)"
-    )
-    cover_ref = models.URLField(
-        blank=True, default="", help_text="URL where poster image is located (imported)"
-    )
-    movie_id = models.CharField(
-        blank=True, default="unknown", help_text="IMDB movie ID (imported)"
-    )
-
     imdb_info = models.ForeignKey(ImdbInfo, null=True, on_delete=models.CASCADE)
 
     def get_absolute_url(self):

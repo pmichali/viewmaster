@@ -27,7 +27,7 @@ spec:
           configMap:
             name: viewmaster-nginx-config
       containers:
-        - image: pmichali/viewmaster-app:v0.3.0
+        - image: pmichali/viewmaster-app:v0.3.1
           imagePullPolicy: Always
           name: app
           workingDir: /code/movie_library  # Set working directory

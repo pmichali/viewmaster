@@ -53,3 +53,7 @@ th, td {
 th {
 	text-align: right;
 }
+
+.missing {
+	border: 2px solid red;
+}
