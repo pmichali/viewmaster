@@ -430,6 +430,7 @@ class MovieCreateUpdateView(
                 "form": form,
                 "imdb_form": imdb_form,
                 "movie": movie,
+                "info": imdb_info,
                 "overridden": overridden,
             },
         )

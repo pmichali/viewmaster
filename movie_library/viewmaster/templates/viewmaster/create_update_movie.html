@@ -9,6 +9,8 @@
 {% endblock %}
  
 {% block content %}
+{% load static %}
+{% load custom_template_tags %}
    <h4>{% if movie %}Edit{% else %}Add{% endif %} Movie{% if movie %} ({{ movie.id }}){% endif %}</h4>	
     <form id="add-form" method="post">
       {% csrf_token %}
@@ -154,9 +156,7 @@
       		  {{ imdb_form.identifier.errors }}
       		</td>
       		<td rowspan="2">
-     		  {% if "http" in imdb_form.cover_url.value %}
-      			<img src="{{ imdb_form.cover_url.value }}" width="100" alt="Movie Poster" />
-      		  {% endif %}
+      			<img {% movie_cover info %} width="75" alt="Movie Poster" />
        		</td>
       	</tr>
      	<tr>

@@ -14,20 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 @register.simple_tag
-def movie_cover(movie):
-    """Provides src for image (and optionally a class)."""
+def movie_cover(info):
+    """Provides src for cover image (and optionally a class)."""
 
     css_clause = ""
-    info = movie.imdb_info
     if not info:
-        logger.debug("Movie '%s' does not have any IMDB info", movie.title)
+        logger.debug("Movie does not have any IMDB info")
         source = f"{STATIC_URL}viewmaster/no-image.png"
     elif info.cover_file:
         source = f"{MEDIA_URL}{info.cover_file}"
     elif info.cover_url.startswith("http"):
         logger.warning(
             "Movie '%s' (%s) has URL but no file for cover",
-            movie.title,
+            info.title_name,
             info.identifier,
         )
         source = info.cover_url
@@ -35,7 +34,7 @@ def movie_cover(movie):
     else:
         logger.debug(
             "Movie '%s' (%s) does not have cover information (URL=%s)",
-            movie.title,
+            info.title_name,
             info.identifier,
             info.cover_url,
         )
