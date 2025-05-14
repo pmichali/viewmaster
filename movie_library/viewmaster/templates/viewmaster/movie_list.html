@@ -179,9 +179,16 @@
 
 {% block javascript %}
   <script>
-    document.getElementById("id_mode").onclick = function () {
-    	document.getElementById("view_form").submit();
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+	    document.getElementById("id_mode").onchange = function () {
+	        document.getElementById("view_form").submit();
+	    };
+	});
+    document.getElementById("phrase").onkeyup = function (event) {
+        if (event.key === "Enter") {
+            document.getElementById("view_form").submit();
+        }
+    };
     document.getElementById("search").onclick = function () {
   	  phrase = document.getElementById("phrase").value
   	  if (phrase == "") {
