@@ -135,7 +135,7 @@ class MovieListView(ListView):
             .order_by("format")
         )
 
-        movies = Movie.objects
+        movies = Movie.objects.select_related('imdb_info')
         if not show_ld:
             movies = movies.exclude(format="LD")
         if mode == "alpha":
